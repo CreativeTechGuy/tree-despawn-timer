@@ -7,7 +7,6 @@ import net.runelite.api.Point;
 import net.runelite.api.coords.WorldPoint;
 
 import java.awt.*;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -17,39 +16,34 @@ import java.util.function.Function;
 public class TreeState {
     int ticksLeft;
     int maxTicks;
-    GameObject tree;
+    WorldPoint worldPoint;
+    String name;
     HashSet<Player> playersChopping = new HashSet<>();
-    boolean isLoaded = true;
     boolean hasUnrenderedPlayersChopping = false;
     boolean haveYouChoppedLog = false;
     List<WorldPoint> points;
     Client client;
 
     TreeState(GameObject tree, Client client) {
-        this.tree = tree;
+        this.worldPoint = tree.getWorldLocation();
         this.client = client;
-        maxTicks = TreeConfig.getTreeById(tree.getId()).getMaxTicks();
+        TreeConfig config = TreeConfig.getTreeById(tree.getId());
+        maxTicks = config.getMaxTicks();
         ticksLeft = maxTicks;
+        name = config.name();
         points = getPoints(tree);
     }
 
-    /**
-     * Returns true if ticks remaining changed
-     */
-    boolean tick() {
+    void tick() {
         if (!playersChopping.isEmpty() || hasUnrenderedPlayersChopping) {
-            if (playersChopping.size() >= 2 || !playersChopping.contains(client.getLocalPlayer()) || haveYouChoppedLog || ticksLeft < maxTicks || hasUnrenderedPlayersChopping) {
-                if (ticksLeft == maxTicks) {
-                    System.out.println(tree.getWorldLocation() + " - Start time: " + Instant.now());
+            if (playersChopping.size() >= 2 || !playersChopping.contains(client.getLocalPlayer()) || haveYouChoppedLog || hasUnrenderedPlayersChopping) {
+                if (ticksLeft > 0) {
+                    ticksLeft--;
                 }
-                ticksLeft--;
-                return true;
             }
-        } else if (ticksLeft < maxTicks && ticksLeft > 0) {
+        } else if (ticksLeft < maxTicks) {
             ticksLeft++;
-            return true;
         }
-        return false;
     }
 
     boolean shouldShowTimer() {
@@ -67,14 +61,14 @@ public class TreeState {
         if (percent < 40) {
             return Color.ORANGE;
         }
-        if (percent < 75) {
+        if (percent < 80) {
             return Color.YELLOW;
         }
         return Color.GREEN;
     }
 
-    Double getTimePercent() {
-        return Math.max(ticksLeft / (double) maxTicks, 0);
+    Float getTimePercent() {
+        return Math.max(ticksLeft / (float) maxTicks, 0);
     }
 
     Integer getTimeTicks() {

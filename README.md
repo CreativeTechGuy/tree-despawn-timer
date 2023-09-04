@@ -4,12 +4,13 @@ Demo of the plugin UI. You can also change the pie timer to show ticks as a numb
 ![Demo](./demo.png)
 
 This plugin will estimate the amount of time remaining to cut a tree before it'll be chopped down (despawn). This takes
-into account the new forestry mechanics where a tree will stay standing for a set amount of time, will regain health
+into account the [new forestry mechanics](https://oldschool.runescape.wiki/w/Forestry) where a tree will stay standing
+for a set amount of time, will regain health
 when not being chopped, etc. The plugin is highly accurate if you are chopping alone, and reasonably accurate for
-everything else. It works best for higher level trees with longer despawn timers.
+everything else.
 
-If the plugin is reasonably confident that it knows how long a tree has left, it'll show a timer on the tree. If there's
-no timer, the tree has an unknown amount of time left so you should assume it'll be chopped down any moment.
+If the plugin is reasonably confident that it knows how long a tree has left, it'll show a timer on the tree. If the
+tree was already being chopped when you arrived, no time is shown as we cannot be confident in the time remaining.
 
 Technical details gathered through testing (not official):
 

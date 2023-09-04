@@ -15,7 +15,6 @@ import net.runelite.client.ui.overlay.OverlayManager;
 
 import javax.annotation.Nullable;
 import javax.inject.Inject;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -41,11 +40,13 @@ public class TreeDespawnTimerPlugin extends Plugin {
     private TreeDespawnTimerOverlay treeDespawnTimerOverlay;
 
     Pattern WOOD_CUT_PATTERN = Pattern.compile("You get (?:some|an)[\\w ]+(?:logs?|mushrooms)\\.");
-    HashMap<WorldPoint, TreeState> treeStates = new HashMap<>();
+    HashMap<String, TreeState> treeStates = new HashMap<>();
     HashSet<TreeState> uniqueTrees = new HashSet<>();
     HashMap<Player, TreeState> playerTreeChopping = new HashMap<>();
     HashMap<Player, Integer> newlySpawnedPlayers = new HashMap<>();
     boolean firstTick = true;
+    ArrayList<Runnable> firstTickQueue = new ArrayList<>();
+    int nextGarbageCollect = 100;
 
     @Provides
     TreeDespawnTimerConfig provideConfig(ConfigManager configManager) {
@@ -63,29 +64,43 @@ public class TreeDespawnTimerPlugin extends Plugin {
         treeStates.clear();
         uniqueTrees.clear();
         playerTreeChopping.clear();
+        newlySpawnedPlayers.clear();
+        firstTickQueue.clear();
         firstTick = true;
     }
 
     @Subscribe
     public void onGameStateChanged(GameStateChanged event) {
-        if (event.getGameState() == GameState.LOADING) {
+        if (event.getGameState() == GameState.HOPPING || event.getGameState() == GameState.LOGGING_IN) {
             treeStates.clear();
             uniqueTrees.clear();
             playerTreeChopping.clear();
+            newlySpawnedPlayers.clear();
+            firstTickQueue.clear();
             firstTick = true;
         }
     }
 
     @Subscribe
     public void onGameTick(GameTick gameTick) {
-        firstTick = false;
-        ArrayList<TreeState> toDelete = new ArrayList<>();
-        uniqueTrees.forEach(entry -> {
-            if (!entry.tick() && !entry.isLoaded) {
-                toDelete.add(entry);
-            }
-        });
-        toDelete.forEach(this::deleteTree);
+        if (firstTick) {
+            firstTick = false;
+            firstTickQueue.forEach(Runnable::run);
+            firstTickQueue.clear();
+        }
+        uniqueTrees.forEach(TreeState::tick);
+        nextGarbageCollect--;
+        if (nextGarbageCollect <= 0) {
+            ArrayList<TreeState> toDelete = new ArrayList<>();
+            nextGarbageCollect = 100;
+            uniqueTrees.forEach(entry -> {
+                if (entry.worldPoint.distanceTo(client.getLocalPlayer()
+                        .getWorldLocation()) > 150 && !entry.shouldShowTimer()) {
+                    toDelete.add(entry);
+                }
+            });
+            toDelete.forEach(this::deleteTree);
+        }
         newlySpawnedPlayers.entrySet().removeIf(p -> {
             p.setValue(p.getValue() - 1);
             return p.getValue() <= 0;
@@ -97,7 +112,11 @@ public class TreeDespawnTimerPlugin extends Plugin {
         GameObject gameObject = event.getGameObject();
         if (TreeConfig.isTree(gameObject)) {
             TreeState treeState = new TreeState(gameObject, client);
-            treeState.points.forEach(point -> treeStates.put(point, treeState));
+            if (uniqueTrees.stream()
+                    .anyMatch(t -> t.worldPoint.equals(gameObject.getWorldLocation()))) {
+                return;
+            }
+            treeState.points.forEach(point -> treeStates.put(point.toString(), treeState));
             uniqueTrees.add(treeState);
         }
     }
@@ -108,55 +127,56 @@ public class TreeDespawnTimerPlugin extends Plugin {
         if (!TreeConfig.isTree(gameObject)) {
             return;
         }
-        TreeState treeState = treeStates.get(gameObject.getWorldLocation());
+        TreeState treeState = treeStates.get(gameObject.getWorldLocation().toString());
         if (treeState == null) {
             return;
         }
-        System.out.println(treeState.tree.getWorldLocation() + " - Tree despawned with " + treeState.ticksLeft + " / " + treeState.maxTicks + " ticks remaining at " + Instant.now());
         deleteTree(treeState);
     }
 
     @Subscribe
     public void onAnimationChanged(AnimationChanged event) {
-        if (firstTick) {
-            return;
-        }
         if (event.getActor() instanceof Player) {
             Player player = (Player) event.getActor();
-            boolean isNewPlayer = newlySpawnedPlayers.containsKey(player);
-            if (playerTreeChopping.containsKey(player)) {
-                TreeState treeState = playerTreeChopping.get(player);
-                treeState.playersChopping.remove(player);
-                if (player.equals(client.getLocalPlayer())) {
-                    treeState.haveYouChoppedLog = false;
+            Runnable r = () -> {
+                boolean isNewPlayer = newlySpawnedPlayers.containsKey(player);
+                if (playerTreeChopping.containsKey(player)) {
+                    TreeState treeState = playerTreeChopping.get(player);
+                    treeState.playersChopping.remove(player);
+                    if (player.equals(client.getLocalPlayer())) {
+                        treeState.haveYouChoppedLog = false;
+                    }
+                    playerTreeChopping.remove(player);
                 }
-                playerTreeChopping.remove(player);
+                if (isWoodcutting(player)) {
+                    TreeState interactingTree = findClosetFacingTree(player);
+                    if (interactingTree == null) {
+                        return;
+                    }
+                    // A player spawned in and nearly immediately started chopping, assume they've been chopping for a while
+                    if (isNewPlayer && !interactingTree.hasUnrenderedPlayersChopping && interactingTree.playersChopping.isEmpty()) {
+                        deleteTree(interactingTree);
+                    } else {
+                        interactingTree.playersChopping.add(player);
+                        playerTreeChopping.put(player, interactingTree);
+                    }
+                }
+            };
+            if (firstTick) {
+                firstTickQueue.add(r);
+            } else {
+                r.run();
             }
-            if (isWoodcutting(player)) {
-                TreeState interactingTree = findClosetFacingTree(player);
-                if (interactingTree == null) {
-                    return;
-                }
-                System.out.println("Interacting Tree: " + interactingTree.tree.getWorldLocation() + " p:" + interactingTree.playersChopping.size() + " up:" + interactingTree.hasUnrenderedPlayersChopping);
-                if (isNewPlayer) {
-                    System.out.println("New player ticks:" + newlySpawnedPlayers.get(player));
-                }
-                if (isNewPlayer && !interactingTree.hasUnrenderedPlayersChopping && interactingTree.playersChopping.isEmpty()) {
-                    System.out.println("FRESH player is already woodcutting");
-                    deleteTree(interactingTree);
-                } else {
-                    interactingTree.playersChopping.add(player);
-                    playerTreeChopping.put(player, interactingTree);
-                }
-            }
-
         }
     }
 
     @Subscribe
     public void onPlayerSpawned(PlayerSpawned event) {
         Player player = event.getPlayer();
-        newlySpawnedPlayers.put(player, 6);
+        if (player.equals(client.getLocalPlayer())) {
+            return;
+        }
+        newlySpawnedPlayers.put(player, 8);
     }
 
     @Subscribe
@@ -173,8 +193,7 @@ public class TreeDespawnTimerPlugin extends Plugin {
     @Subscribe
     public void onChatMessage(ChatMessage event) {
         if (event.getType() != ChatMessageType.SPAM
-                && event.getType() != ChatMessageType.GAMEMESSAGE
-                && event.getType() != ChatMessageType.MESBOX) {
+                && event.getType() != ChatMessageType.GAMEMESSAGE) {
             return;
         }
         if (WOOD_CUT_PATTERN.matcher(event.getMessage()).matches()) {
@@ -187,7 +206,7 @@ public class TreeDespawnTimerPlugin extends Plugin {
 
     void deleteTree(TreeState treeState) {
         treeState.playersChopping.forEach(player -> playerTreeChopping.remove(player));
-        treeState.points.forEach(point -> treeStates.remove(point));
+        treeState.points.forEach(point -> treeStates.remove(point.toString()));
         uniqueTrees.remove(treeState);
     }
 
@@ -196,7 +215,7 @@ public class TreeDespawnTimerPlugin extends Plugin {
         WorldPoint actorLocation = player.getWorldLocation();
         Direction direction = new Angle(player.getOrientation()).getNearestDirection();
         WorldPoint facingPoint = neighborPoint(actorLocation, direction);
-        return treeStates.get(facingPoint);
+        return treeStates.get(facingPoint.toString());
     }
 
     private WorldPoint neighborPoint(WorldPoint point, Direction direction) {
@@ -231,15 +250,10 @@ public class TreeDespawnTimerPlugin extends Plugin {
             case AnimationID.WOODCUTTING_3A_AXE:
             case AnimationID.WOODCUTTING_CRYSTAL:
             case AnimationID.WOODCUTTING_TRAILBLAZER:
+            case 2876: // Dragon axe (Lumber Up) Special Attack
                 return true;
             default:
                 return false;
         }
-    }
-
-    private void listTrees() {
-        uniqueTrees.forEach(t -> {
-            log.debug("Tree: Pos:" + t.tree.getWorldLocation().toString() + "P: " + t.playersChopping.size());
-        });
     }
 }

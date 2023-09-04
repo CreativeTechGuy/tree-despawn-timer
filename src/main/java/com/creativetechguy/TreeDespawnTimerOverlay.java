@@ -3,6 +3,7 @@ package com.creativetechguy;
 import net.runelite.api.Client;
 import net.runelite.api.Perspective;
 import net.runelite.api.Point;
+import net.runelite.api.coords.LocalPoint;
 import net.runelite.client.ui.overlay.Overlay;
 import net.runelite.client.ui.overlay.OverlayLayer;
 import net.runelite.client.ui.overlay.OverlayPosition;
@@ -23,18 +24,22 @@ public class TreeDespawnTimerOverlay extends Overlay {
         this.plugin = plugin;
         this.config = config;
         this.client = client;
-        setLayer(OverlayLayer.ABOVE_SCENE);
+        setLayer(OverlayLayer.UNDER_WIDGETS);
         setPosition(OverlayPosition.DYNAMIC);
     }
 
     @Override
     public Dimension render(Graphics2D graphics) {
-        for (TreeState treeState : plugin.treeStates.values()) {
+        for (TreeState treeState : plugin.uniqueTrees) {
             if (!treeState.shouldShowTimer()) {
                 continue;
             }
+            LocalPoint lp = LocalPoint.fromWorld(client, treeState.worldPoint);
+            if (lp == null) {
+                continue;
+            }
             Point point = Perspective.localToCanvas(client,
-                    treeState.tree.getLocalLocation(),
+                    lp,
                     client.getPlane());
             if (point == null) {
                 continue;
