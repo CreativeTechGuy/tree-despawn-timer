@@ -10,8 +10,8 @@ public interface TreeDespawnTimerConfig extends Config {
 
     @ConfigItem(
             keyName = "timerType",
-            name = "Timer UI Type",
-            description = "How would you like the estimated remaining time on the tree to be displayed?",
+            name = "Timer Display Type",
+            description = "How would you like the estimated remaining time on the tree to be displayed?"
     )
     default TimerTypes timerType() {
         return TimerTypes.PIE;
