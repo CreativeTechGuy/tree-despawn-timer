@@ -55,6 +55,12 @@ public class TreeDespawnTimerPlugin extends Plugin {
     @Override
     protected void startUp() throws Exception {
         overlayManager.add(treeDespawnTimerOverlay);
+        deferTickQueue.add(() -> {
+            client.getPlayers().forEach(player -> {
+                onPlayerSpawned(new PlayerSpawned(player));
+                handlePlayerChopping(player);
+            });
+        });
     }
 
     @Override
@@ -133,30 +139,7 @@ public class TreeDespawnTimerPlugin extends Plugin {
     public void onAnimationChanged(AnimationChanged event) {
         if (event.getActor() instanceof Player) {
             Player player = (Player) event.getActor();
-            Runnable r = () -> {
-                boolean isNewPlayer = newlySpawnedPlayers.containsKey(player);
-                if (playerTreeChopping.containsKey(player)) {
-                    TreeState treeState = playerTreeChopping.get(player);
-                    treeState.playersChopping.remove(player);
-                    if (player.equals(client.getLocalPlayer())) {
-                        treeState.haveYouChoppedLog = false;
-                    }
-                    playerTreeChopping.remove(player);
-                }
-                if (isWoodcutting(player)) {
-                    TreeState interactingTree = findClosetFacingTree(player);
-                    if (interactingTree == null) {
-                        return;
-                    }
-                    // A player spawned in and nearly immediately started chopping, assume they've been chopping for a while
-                    if (isNewPlayer && !interactingTree.hasUnrenderedPlayersChopping && interactingTree.playersChopping.isEmpty()) {
-                        interactingTree.hideTree = true;
-                    }
-                    interactingTree.playersChopping.add(player);
-                    playerTreeChopping.put(player, interactingTree);
-                }
-            };
-            deferTickQueue.add(r);
+            deferTickQueue.add(() -> this.handlePlayerChopping(player));
         }
     }
 
@@ -194,9 +177,33 @@ public class TreeDespawnTimerPlugin extends Plugin {
         }
     }
 
+    void handlePlayerChopping(Player player) {
+        boolean isNewPlayer = newlySpawnedPlayers.containsKey(player);
+        if (playerTreeChopping.containsKey(player)) {
+            TreeState treeState = playerTreeChopping.get(player);
+            treeState.playersChopping.remove(player);
+            if (player.equals(client.getLocalPlayer())) {
+                treeState.haveYouChoppedLog = false;
+            }
+            playerTreeChopping.remove(player);
+        }
+        if (isWoodcutting(player)) {
+            TreeState interactingTree = findClosetFacingTree(player);
+            if (interactingTree == null) {
+                return;
+            }
+            // A player spawned in and nearly immediately started chopping, assume they've been chopping for a while
+            if (isNewPlayer && !interactingTree.hasUnrenderedPlayersChopping && interactingTree.playersChopping.isEmpty()) {
+                interactingTree.hideTree = true;
+            }
+            interactingTree.playersChopping.add(player);
+            playerTreeChopping.put(player, interactingTree);
+        }
+    }
+
     void deleteTree(TreeState treeState) {
-        treeState.playersChopping.forEach(player -> playerTreeChopping.remove(player));
-        treeState.points.forEach(point -> treeAtLocation.remove(point));
+        treeState.playersChopping.forEach(playerTreeChopping::remove);
+        treeState.points.forEach(treeAtLocation::remove);
         uniqueTrees.remove(treeState);
     }
 
