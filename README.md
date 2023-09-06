@@ -12,6 +12,12 @@ everything else.
 If the plugin is reasonably confident that it knows how long a tree has left, it'll show a timer on the tree. If the
 tree was already being chopped when you arrived, no time is shown as we cannot be confident in the time remaining.
 
+Other Forestry Related Plugins:
+
+* [Tree Count](https://runelite.net/plugin-hub/show/treecount) - shows the number of players currently chopping a tree
+* [Item Charges Improved](https://runelite.net/plugin-hub/show/tictac7x-charges) - tracks the contents of the log
+  basket (along with tons of other items)
+
 Technical details gathered through testing (not official):
 
 * Tree "health" only starts ticking down once someone has collected the first log from the tree. If you are chopping the
@@ -25,3 +31,8 @@ Shortcomings:
   be standing until someone collects another log.
     * Unfortunately this cannot be fixed as the system is not tick-perfect. It shouldn't be off by more than a few
       seconds though.
+
+Credits:
+
+* Thanks to Infinitay's [tree count plugin](https://github.com/Infinitay/tree-count-plugin) for help with identifying
+  which tree a player is chopping.

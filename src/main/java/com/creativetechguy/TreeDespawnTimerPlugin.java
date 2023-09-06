@@ -39,13 +39,12 @@ public class TreeDespawnTimerPlugin extends Plugin {
     @Inject
     private TreeDespawnTimerOverlay treeDespawnTimerOverlay;
 
-    Pattern WOOD_CUT_PATTERN = Pattern.compile("You get (?:some|an)[\\w ]+(?:logs?|mushrooms)\\.");
-    HashMap<String, TreeState> treeStates = new HashMap<>();
-    HashSet<TreeState> uniqueTrees = new HashSet<>();
-    HashMap<Player, TreeState> playerTreeChopping = new HashMap<>();
-    HashMap<Player, Integer> newlySpawnedPlayers = new HashMap<>();
-    boolean firstTick = true;
-    ArrayList<Runnable> firstTickQueue = new ArrayList<>();
+    private final Pattern WOOD_CUT_PATTERN = Pattern.compile("You get (?:some|an)[\\w ]+(?:logs?|mushrooms)\\.");
+    private final HashMap<WorldPoint, TreeState> treeAtLocation = new HashMap<>();
+    protected HashSet<TreeState> uniqueTrees = new HashSet<>();
+    private final HashMap<Player, TreeState> playerTreeChopping = new HashMap<>();
+    private final HashMap<Player, Integer> newlySpawnedPlayers = new HashMap<>();
+    private final ArrayList<Runnable> deferTickQueue = new ArrayList<>();
     int nextGarbageCollect = 100;
 
     @Provides
@@ -61,41 +60,38 @@ public class TreeDespawnTimerPlugin extends Plugin {
     @Override
     protected void shutDown() throws Exception {
         overlayManager.remove(treeDespawnTimerOverlay);
-        treeStates.clear();
+        treeAtLocation.clear();
         uniqueTrees.clear();
         playerTreeChopping.clear();
         newlySpawnedPlayers.clear();
-        firstTickQueue.clear();
-        firstTick = true;
+        deferTickQueue.clear();
     }
 
     @Subscribe
     public void onGameStateChanged(GameStateChanged event) {
         if (event.getGameState() == GameState.HOPPING || event.getGameState() == GameState.LOGGING_IN) {
-            treeStates.clear();
+            treeAtLocation.clear();
             uniqueTrees.clear();
             playerTreeChopping.clear();
             newlySpawnedPlayers.clear();
-            firstTickQueue.clear();
-            firstTick = true;
+            deferTickQueue.clear();
         }
     }
 
     @Subscribe
     public void onGameTick(GameTick gameTick) {
-        if (firstTick) {
-            firstTick = false;
-            firstTickQueue.forEach(Runnable::run);
-            firstTickQueue.clear();
-        }
+        deferTickQueue.forEach(Runnable::run);
+        deferTickQueue.clear();
+
         uniqueTrees.forEach(TreeState::tick);
         nextGarbageCollect--;
         if (nextGarbageCollect <= 0) {
             ArrayList<TreeState> toDelete = new ArrayList<>();
-            nextGarbageCollect = 100;
+            nextGarbageCollect = 25;
             uniqueTrees.forEach(entry -> {
-                if (entry.worldPoint.distanceTo(client.getLocalPlayer()
-                        .getWorldLocation()) > 150 && !entry.shouldShowTimer()) {
+                // Cleanup untouched trees far away from the player
+                if ((entry.worldPoint.distanceTo(client.getLocalPlayer()
+                        .getWorldLocation()) > 150 && !entry.shouldShowTimer()) || (entry.getTimeTicks() == 0 && entry.playersChopping.size() == 0)) {
                     toDelete.add(entry);
                 }
             });
@@ -112,11 +108,10 @@ public class TreeDespawnTimerPlugin extends Plugin {
         GameObject gameObject = event.getGameObject();
         if (TreeConfig.isTree(gameObject)) {
             TreeState treeState = new TreeState(gameObject, client);
-            if (uniqueTrees.stream()
-                    .anyMatch(t -> t.worldPoint.equals(gameObject.getWorldLocation()))) {
+            if (treeAtLocation.containsKey(gameObject.getWorldLocation())) {
                 return;
             }
-            treeState.points.forEach(point -> treeStates.put(point.toString(), treeState));
+            treeState.points.forEach(point -> treeAtLocation.put(point, treeState));
             uniqueTrees.add(treeState);
         }
     }
@@ -127,7 +122,7 @@ public class TreeDespawnTimerPlugin extends Plugin {
         if (!TreeConfig.isTree(gameObject)) {
             return;
         }
-        TreeState treeState = treeStates.get(gameObject.getWorldLocation().toString());
+        TreeState treeState = treeAtLocation.get(gameObject.getWorldLocation());
         if (treeState == null) {
             return;
         }
@@ -155,18 +150,13 @@ public class TreeDespawnTimerPlugin extends Plugin {
                     }
                     // A player spawned in and nearly immediately started chopping, assume they've been chopping for a while
                     if (isNewPlayer && !interactingTree.hasUnrenderedPlayersChopping && interactingTree.playersChopping.isEmpty()) {
-                        deleteTree(interactingTree);
-                    } else {
-                        interactingTree.playersChopping.add(player);
-                        playerTreeChopping.put(player, interactingTree);
+                        interactingTree.hideTree = true;
                     }
+                    interactingTree.playersChopping.add(player);
+                    playerTreeChopping.put(player, interactingTree);
                 }
             };
-            if (firstTick) {
-                firstTickQueue.add(r);
-            } else {
-                r.run();
-            }
+            deferTickQueue.add(r);
         }
     }
 
@@ -206,7 +196,7 @@ public class TreeDespawnTimerPlugin extends Plugin {
 
     void deleteTree(TreeState treeState) {
         treeState.playersChopping.forEach(player -> playerTreeChopping.remove(player));
-        treeState.points.forEach(point -> treeStates.remove(point.toString()));
+        treeState.points.forEach(point -> treeAtLocation.remove(point));
         uniqueTrees.remove(treeState);
     }
 
@@ -215,7 +205,7 @@ public class TreeDespawnTimerPlugin extends Plugin {
         WorldPoint actorLocation = player.getWorldLocation();
         Direction direction = new Angle(player.getOrientation()).getNearestDirection();
         WorldPoint facingPoint = neighborPoint(actorLocation, direction);
-        return treeStates.get(facingPoint.toString());
+        return treeAtLocation.get(facingPoint);
     }
 
     private WorldPoint neighborPoint(WorldPoint point, Direction direction) {

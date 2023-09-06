@@ -1,9 +1,7 @@
 package com.creativetechguy;
 
-import net.runelite.api.Client;
-import net.runelite.api.GameObject;
-import net.runelite.api.Player;
 import net.runelite.api.Point;
+import net.runelite.api.*;
 import net.runelite.api.coords.WorldPoint;
 
 import java.awt.*;
@@ -14,23 +12,27 @@ import java.util.List;
 import java.util.function.Function;
 
 public class TreeState {
-    int ticksLeft;
-    int maxTicks;
+
     WorldPoint worldPoint;
-    String name;
+    Point centerOffset;
     HashSet<Player> playersChopping = new HashSet<>();
+    List<WorldPoint> points;
     boolean hasUnrenderedPlayersChopping = false;
     boolean haveYouChoppedLog = false;
-    List<WorldPoint> points;
-    Client client;
+    boolean hideTree = false;
 
-    TreeState(GameObject tree, Client client) {
-        this.worldPoint = tree.getWorldLocation();
+    private int ticksLeft;
+    private final int maxTicks;
+    private final Client client;
+
+
+    public TreeState(GameObject tree, Client client) {
+        worldPoint = tree.getWorldLocation();
         this.client = client;
         TreeConfig config = TreeConfig.getTreeById(tree.getId());
         maxTicks = config.getMaxTicks();
         ticksLeft = maxTicks;
-        name = config.name();
+        centerOffset = getCenterOffset(tree);
         points = getPoints(tree);
     }
 
@@ -47,6 +49,9 @@ public class TreeState {
     }
 
     boolean shouldShowTimer() {
+        if (hideTree) {
+            return false;
+        }
         if (playersChopping.size() > 0) {
             return true;
         }
@@ -56,15 +61,15 @@ public class TreeState {
     Color getTimerColor() {
         double percent = getTimePercent() * 100;
         if (percent < 15) {
-            return Color.RED;
+            return new Color(220, 0, 0);
         }
         if (percent < 40) {
-            return Color.ORANGE;
+            return new Color(230, 160, 0);
         }
         if (percent < 80) {
-            return Color.YELLOW;
+            return new Color(230, 230, 0);
         }
-        return Color.GREEN;
+        return new Color(0, 255, 0);
     }
 
     Float getTimePercent() {
@@ -91,6 +96,18 @@ public class TreeState {
             }
         }
         return list;
+    }
+
+    private Point getCenterOffset(GameObject gameObject) {
+        int x = 0;
+        int y = 0;
+        if (gameObject.sizeX() % 2 == 0) {
+            x = (gameObject.sizeX() - 1) * Perspective.LOCAL_HALF_TILE_SIZE;
+        }
+        if (gameObject.sizeY() % 2 == 0) {
+            y = (gameObject.sizeY() - 1) * Perspective.LOCAL_HALF_TILE_SIZE;
+        }
+        return new Point(x, y);
     }
 
     private WorldPoint getSWWorldPoint(GameObject gameObject) {

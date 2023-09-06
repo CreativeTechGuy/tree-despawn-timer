@@ -7,7 +7,6 @@ import net.runelite.api.coords.LocalPoint;
 import net.runelite.client.ui.overlay.Overlay;
 import net.runelite.client.ui.overlay.OverlayLayer;
 import net.runelite.client.ui.overlay.OverlayPosition;
-import net.runelite.client.ui.overlay.OverlayUtil;
 import net.runelite.client.ui.overlay.components.ProgressPieComponent;
 
 import javax.inject.Inject;
@@ -38,28 +37,36 @@ public class TreeDespawnTimerOverlay extends Overlay {
             if (lp == null) {
                 continue;
             }
+            LocalPoint centeredPoint = new LocalPoint(lp.getX() + treeState.centerOffset.getX(),
+                    lp.getY() + treeState.centerOffset.getY());
             Point point = Perspective.localToCanvas(client,
-                    lp,
+                    centeredPoint,
                     client.getPlane());
             if (point == null) {
                 continue;
             }
+            boolean isPopularTree = config.highlightPopularTrees() && treeState.playersChopping.size() >= 10;
             if (config.timerType() == TimerTypes.PIE) {
                 ProgressPieComponent pie = new ProgressPieComponent();
                 pie.setPosition(point);
                 pie.setBorderColor(treeState.getTimerColor());
+                pie.setDiameter(16);
+                if (isPopularTree) {
+                    pie.setBorder(Color.BLACK, 2);
+                    pie.setDiameter(25);
+                }
                 pie.setFill(treeState.getTimerColor());
-                pie.setDiameter(15);
                 pie.setProgress(treeState.getTimePercent());
                 pie.render(graphics);
             } else if (config.timerType() == TimerTypes.TICKS) {
                 String text = treeState.getTimeTicks().toString();
-                int textWidth = graphics.getFontMetrics().stringWidth(text);
-                int textHeight = graphics.getFontMetrics().getAscent();
-                OverlayUtil.renderTextLocation(graphics,
-                        new Point(point.getX() - textWidth / 2, point.getY() + textHeight / 2),
-                        text,
-                        treeState.getTimerColor());
+                CustomTextComponent textComponent = new CustomTextComponent(text,
+                        new java.awt.Point(point.getX(), point.getY()));
+                if (isPopularTree) {
+                    textComponent.setEmphasize(true);
+                }
+                textComponent.setColor(treeState.getTimerColor());
+                textComponent.render(graphics);
             }
         }
         return null;
