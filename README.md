@@ -12,6 +12,12 @@ everything else.
 If the plugin is reasonably confident that it knows how long a tree has left, it'll show a timer on the tree. If the
 tree was already being chopped when you arrived, no time is shown as we cannot be confident in the time remaining.
 
+Config Options:
+
+* Timer Display Type - Choose between a pie timer and a tick counter
+* Popular Tree Indicator - Increases the size of the timer when there are 10+ players chopping the tree. (Max players
+  for the Forestry invisible woodcutting boost.)
+
 Other Forestry Related Plugins:
 
 * [Tree Count](https://runelite.net/plugin-hub/show/treecount) - shows the number of players currently chopping a tree

@@ -12,7 +12,7 @@ public interface TreeDespawnTimerConfig extends Config {
             keyName = "timerType",
             name = "Timer Display Type",
             position = 1,
-            description = "How would you like the estimated remaining time to be displayed?"
+            description = "The UI style for displaying the estimated remaining time on each tree."
     )
     default TimerTypes timerType() {
         return TimerTypes.PIE;
@@ -20,9 +20,9 @@ public interface TreeDespawnTimerConfig extends Config {
 
     @ConfigItem(
             keyName = "highlightPopularTrees",
-            name = "Highlight Popular Trees",
+            name = "Popular Tree Indicator",
             position = 2,
-            description = "Should the timer be emphasized when 10+ players are chopping a tree?"
+            description = "Increases the size of the timer when there are 10+ players chopping the tree."
     )
     default boolean highlightPopularTrees() {
         return true;
