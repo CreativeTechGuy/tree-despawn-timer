@@ -17,6 +17,7 @@ public class TreeState {
     Point centerOffset;
     HashSet<Player> playersChopping = new HashSet<>();
     List<WorldPoint> points;
+    String treeName;
     boolean hasUnrenderedPlayersChopping = false;
     boolean haveYouChoppedLog = false;
     boolean hideTree = false;
@@ -30,6 +31,7 @@ public class TreeState {
         worldPoint = tree.getWorldLocation();
         this.client = client;
         TreeConfig config = TreeConfig.getTreeById(tree.getId());
+        treeName = config.name();
         maxTicks = config.getMaxTicks();
         ticksLeft = maxTicks;
         centerOffset = getCenterOffset(tree);
@@ -59,6 +61,9 @@ public class TreeState {
     }
 
     Color getTimerColor() {
+        if (hideTree) {
+            return Color.GRAY;
+        }
         double percent = getTimePercent() * 100;
         if (percent < 15) {
             return new Color(220, 0, 0);

@@ -45,7 +45,10 @@ public class TreeDespawnTimerPlugin extends Plugin {
     private final HashMap<Player, TreeState> playerTreeChopping = new HashMap<>();
     private final HashMap<Player, Integer> newlySpawnedPlayers = new HashMap<>();
     private final ArrayList<Runnable> deferTickQueue = new ArrayList<>();
-    int nextGarbageCollect = 100;
+    private int nextGarbageCollect = 100;
+    private int playerRecentlyClimbedRedwood = 0;
+    private int currentPlayerPlane = 0;
+    private final int playerSpawnedTicksMax = 8;
 
     @Provides
     TreeDespawnTimerConfig provideConfig(ConfigManager configManager) {
@@ -86,6 +89,14 @@ public class TreeDespawnTimerPlugin extends Plugin {
 
     @Subscribe
     public void onGameTick(GameTick gameTick) {
+        int newPlane = client.getLocalPlayer().getWorldLocation().getPlane();
+        if (newPlane != currentPlayerPlane) {
+            currentPlayerPlane = newPlane;
+            playerRecentlyClimbedRedwood = playerSpawnedTicksMax;
+        }
+        if (playerRecentlyClimbedRedwood > 0) {
+            playerRecentlyClimbedRedwood--;
+        }
         deferTickQueue.forEach(Runnable::run);
         deferTickQueue.clear();
 
@@ -149,7 +160,7 @@ public class TreeDespawnTimerPlugin extends Plugin {
         if (player.equals(client.getLocalPlayer())) {
             return;
         }
-        newlySpawnedPlayers.put(player, 8);
+        newlySpawnedPlayers.put(player, playerSpawnedTicksMax);
     }
 
     @Subscribe
@@ -194,7 +205,16 @@ public class TreeDespawnTimerPlugin extends Plugin {
             }
             // A player spawned in and nearly immediately started chopping, assume they've been chopping for a while
             if (isNewPlayer && !interactingTree.hasUnrenderedPlayersChopping && interactingTree.playersChopping.isEmpty()) {
-                interactingTree.hideTree = true;
+                if (interactingTree.treeName.equals(TreeConfig.REDWOOD.name())) {
+                    // Local player just climbed a redwood tree, so assume they've been chopping for a while
+                    if (playerRecentlyClimbedRedwood > 0) {
+                        interactingTree.hideTree = true;
+                    }
+                    // If the local player has already been at redwoods and a new player shows up,
+                    // ignore that they are a new player since that player likely just climbed the ladder too.
+                } else {
+                    interactingTree.hideTree = true;
+                }
             }
             interactingTree.playersChopping.add(player);
             playerTreeChopping.put(player, interactingTree);
