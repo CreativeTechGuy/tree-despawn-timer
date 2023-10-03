@@ -5,7 +5,9 @@ import net.runelite.api.GameObject;
 import net.runelite.api.NullObjectID;
 import net.runelite.api.ObjectID;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 public enum TreeConfig {
     // Seconds from: https://oldschool.runescape.wiki/w/Woodcutting#Mechanics
@@ -24,6 +26,12 @@ public enum TreeConfig {
     REDWOOD(60 * 4 + 24,
             new int[]{ObjectID.REDWOOD_TREE, ObjectID.REDWOOD_TREE_29670, NullObjectID.NULL_34633, NullObjectID.NULL_34635, NullObjectID.NULL_34637, NullObjectID.NULL_34639, ObjectID.REDWOOD_TREE_34284, ObjectID.REDWOOD_TREE_34286, ObjectID.REDWOOD_TREE_34288, ObjectID.REDWOOD_TREE_34290});
 
+    private static ArrayList<Integer> blockedRegions = new ArrayList<>(List.of(
+            // Miscellania
+            10044,
+            // Etcetria
+            10300
+    ));
 
     @Getter
     private int maxTicks;
@@ -48,6 +56,9 @@ public enum TreeConfig {
     }
 
     static boolean isTree(GameObject gameObject) {
+        if (blockedRegions.contains(gameObject.getWorldLocation().getRegionID())) {
+            return false;
+        }
         return treeMap.containsKey(gameObject.getId());
     }
 
