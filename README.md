@@ -31,12 +31,14 @@ Technical details gathered through testing (not official):
 * The "health" goes down by 1 every game tick (0.6s) as long as at least one person is chopping.
 * The "health" goes back up by 1 every game tick as long as no one is chopping.
 
-Shortcomings:
+Known Issues:
 
 * The time is an estimate so sometimes will have a few ticks left and be chopped down, or will run out of time and still
   be standing until someone collects another log.
     * Unfortunately this cannot be fixed as the system is not tick-perfect. It shouldn't be off by more than a few
       seconds though.
+* The Tree Despawn Timer will show up for Farming trees despite it not being correct. I don't know of any way to
+  differentiate farming trees from other identical trees. If you have a solution for this, file an issue!
 
 Credits:
 

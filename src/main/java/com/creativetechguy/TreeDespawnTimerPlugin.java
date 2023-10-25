@@ -250,9 +250,9 @@ public class TreeDespawnTimerPlugin extends Plugin {
         }
     }
 
-    // From: https://github.com/Infinitay/tree-count-plugin/blob/master/src/main/java/treecount/TreeCountPlugin.java#L356
     private boolean isWoodcutting(Actor actor) {
         switch (actor.getAnimation()) {
+            // 1H Axes
             case AnimationID.WOODCUTTING_BRONZE:
             case AnimationID.WOODCUTTING_IRON:
             case AnimationID.WOODCUTTING_STEEL:
@@ -267,7 +267,20 @@ public class TreeDespawnTimerPlugin extends Plugin {
             case AnimationID.WOODCUTTING_3A_AXE:
             case AnimationID.WOODCUTTING_CRYSTAL:
             case AnimationID.WOODCUTTING_TRAILBLAZER:
-            case 2876: // Dragon axe (Lumber Up) Special Attack
+                // 2H Axes
+            case 10064: // Bronze
+            case 10065: // Iron
+            case 10066: // Steel
+            case 10067: // Black
+            case 10068: // Mithril
+            case 10069: // Adamant
+            case 10070: // Rune
+            case 10071: // Dragon
+            case 10072: // Crystal
+            case 10073: // Another crystal?
+            case 10074: // 3rd age
+                // Special Attack
+            case 2876: // (Lumber Up) Special Attack
                 return true;
             default:
                 return false;
