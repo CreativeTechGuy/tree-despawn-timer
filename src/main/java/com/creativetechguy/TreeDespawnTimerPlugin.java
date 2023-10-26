@@ -250,6 +250,7 @@ public class TreeDespawnTimerPlugin extends Plugin {
         }
     }
 
+    // https://github.com/runelite/runelite/blob/master/runelite-client/src/main/java/net/runelite/client/plugins/woodcutting/WoodcuttingPlugin.java#L103
     private boolean isWoodcutting(Actor actor) {
         switch (actor.getAnimation()) {
             // 1H Axes
@@ -268,17 +269,16 @@ public class TreeDespawnTimerPlugin extends Plugin {
             case AnimationID.WOODCUTTING_CRYSTAL:
             case AnimationID.WOODCUTTING_TRAILBLAZER:
                 // 2H Axes
-            case 10064: // Bronze
-            case 10065: // Iron
-            case 10066: // Steel
-            case 10067: // Black
-            case 10068: // Mithril
-            case 10069: // Adamant
-            case 10070: // Rune
-            case 10071: // Dragon
-            case 10072: // Crystal
-            case 10073: // Another crystal?
-            case 10074: // 3rd age
+            case AnimationID.WOODCUTTING_2H_BRONZE:
+            case AnimationID.WOODCUTTING_2H_IRON:
+            case AnimationID.WOODCUTTING_2H_STEEL:
+            case AnimationID.WOODCUTTING_2H_BLACK:
+            case AnimationID.WOODCUTTING_2H_MITHRIL:
+            case AnimationID.WOODCUTTING_2H_ADAMANT:
+            case AnimationID.WOODCUTTING_2H_RUNE:
+            case AnimationID.WOODCUTTING_2H_DRAGON:
+            case AnimationID.WOODCUTTING_2H_CRYSTAL:
+            case AnimationID.WOODCUTTING_2H_3A:
                 // Special Attack
             case 2876: // (Lumber Up) Special Attack
                 return true;
