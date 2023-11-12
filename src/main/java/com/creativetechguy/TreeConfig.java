@@ -11,22 +11,24 @@ import java.util.List;
 
 public enum TreeConfig {
     // Seconds from: https://oldschool.runescape.wiki/w/Woodcutting#Mechanics
-    // Tree Ids from: https://github.com/runelite/runelite/blob/master/runelite-client/src/main/java/net/runelite/client/plugins/woodcutting/Tree.java
+    // Tree Ids (simplified) from: https://github.com/runelite/runelite/blob/master/runelite-client/src/main/java/net/runelite/client/plugins/woodcutting/Tree.java
     OAK(27, new int[]{ObjectID.OAK_TREE_4540, ObjectID.OAK_TREE_10820}),
     WILLOW(30,
             new int[]{ObjectID.WILLOW_TREE_10819, ObjectID.WILLOW_TREE_10829, ObjectID.WILLOW_TREE_10831, ObjectID.WILLOW_TREE_10833}),
     TEAK(30, new int[]{ObjectID.TEAK_TREE, ObjectID.TEAK_TREE_36686, ObjectID.TEAK_TREE_40758}),
     MAPLE(60, new int[]{ObjectID.MAPLE_TREE_10832, ObjectID.MAPLE_TREE_36681, ObjectID.MAPLE_TREE_40754}),
     HOLLOW(36, new int[]{ObjectID.HOLLOW_TREE_10821, ObjectID.HOLLOW_TREE_10830}),
-    MAHOGANY(60, new int[]{ObjectID.MAHOGANY_TREE, ObjectID.MAHOGANY, ObjectID.MAHOGANY_TREE_40760}),
+    MAHOGANY(60,
+            new int[]{ObjectID.MAHOGANY_TREE, ObjectID.MAHOGANY, ObjectID.MAHOGANY_TREE_40760}),
     ARCTIC_PINE(60 + 24, new int[]{ObjectID.ARCTIC_PINE_TREE}),
     YEW(60 + 54,
             new int[]{ObjectID.YEW_TREE_10822, NullObjectID.NULL_10823, ObjectID.YEW_TREE_36683, ObjectID.YEW_TREE_40756}),
     MAGIC(60 * 3 + 54, new int[]{ObjectID.MAGIC_TREE_10834, NullObjectID.NULL_10835}),
     REDWOOD(60 * 4 + 24,
-            new int[]{ObjectID.REDWOOD_TREE, ObjectID.REDWOOD_TREE_29670, NullObjectID.NULL_34633, NullObjectID.NULL_34635, NullObjectID.NULL_34637, NullObjectID.NULL_34639, ObjectID.REDWOOD_TREE_34284, ObjectID.REDWOOD_TREE_34286, ObjectID.REDWOOD_TREE_34288, ObjectID.REDWOOD_TREE_34290});
+            // Farming Guild Redwoods are omitted: 34288, 34284, 34286, 34290
+            new int[]{ObjectID.REDWOOD_TREE, ObjectID.REDWOOD_TREE_29670, NullObjectID.NULL_34633, NullObjectID.NULL_34635, NullObjectID.NULL_34637, NullObjectID.NULL_34639});
 
-    private static ArrayList<Integer> blockedRegions = new ArrayList<>(List.of(
+    private static final ArrayList<Integer> blockedRegions = new ArrayList<>(List.of(
             // Miscellania
             10044,
             // Etcetria
@@ -34,9 +36,9 @@ public enum TreeConfig {
     ));
 
     @Getter
-    private int maxTicks;
-    private int[] treeIds;
-    private static HashMap<Integer, TreeConfig> treeMap = new HashMap<>();
+    private final int maxTicks;
+    private final int[] treeIds;
+    private static final HashMap<Integer, TreeConfig> treeMap = new HashMap<>();
 
     static {
         for (TreeConfig treeConfig : values()) {
@@ -61,5 +63,4 @@ public enum TreeConfig {
         }
         return treeMap.containsKey(gameObject.getId());
     }
-
 }

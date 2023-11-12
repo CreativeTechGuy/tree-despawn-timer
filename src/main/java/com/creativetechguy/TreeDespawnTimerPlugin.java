@@ -55,10 +55,12 @@ public class TreeDespawnTimerPlugin extends Plugin {
     private final HashMap<Player, TreeState> playerTreeChopping = new HashMap<>();
     private final HashMap<Player, Integer> newlySpawnedPlayers = new HashMap<>();
     private final ArrayList<Runnable> deferTickQueue = new ArrayList<>();
+    private final HashMap<Player, Integer> playerRecentlySpeced = new HashMap<>();
     private int nextGarbageCollect = 100;
-    private int playerRecentlyClimbedRedwood = 0;
+    private int localPlayerRecentlyClimbedRedwood = 0;
     private int currentPlayerPlane = 0;
     private final int playerSpawnedTicksMax = 8;
+    private final int playerSpecTicksMax = 8;
 
     @Provides
     TreeDespawnTimerConfig provideConfig(ConfigManager configManager) {
@@ -103,18 +105,15 @@ public class TreeDespawnTimerPlugin extends Plugin {
             playerTreeChopping.clear();
             newlySpawnedPlayers.clear();
             deferTickQueue.clear();
+            localPlayerRecentlyClimbedRedwood = playerSpawnedTicksMax;
         }
     }
 
     @Subscribe
     public void onGameTick(GameTick gameTick) {
-        int newPlane = client.getLocalPlayer().getWorldLocation().getPlane();
-        if (newPlane != currentPlayerPlane) {
-            currentPlayerPlane = newPlane;
-            playerRecentlyClimbedRedwood = playerSpawnedTicksMax;
-        }
-        if (playerRecentlyClimbedRedwood > 0) {
-            playerRecentlyClimbedRedwood--;
+        computePlayerPlaneChange();
+        if (localPlayerRecentlyClimbedRedwood > 0) {
+            localPlayerRecentlyClimbedRedwood--;
         }
         deferTickQueue.forEach(Runnable::run);
         deferTickQueue.clear();
@@ -134,6 +133,10 @@ public class TreeDespawnTimerPlugin extends Plugin {
             toDelete.forEach(this::deleteTree);
         }
         newlySpawnedPlayers.entrySet().removeIf(p -> {
+            p.setValue(p.getValue() - 1);
+            return p.getValue() <= 0;
+        });
+        playerRecentlySpeced.entrySet().removeIf(p -> {
             p.setValue(p.getValue() - 1);
             return p.getValue() <= 0;
         });
@@ -175,6 +178,11 @@ public class TreeDespawnTimerPlugin extends Plugin {
     }
 
     @Subscribe
+    public void onMenuOptionClicked(MenuOptionClicked event) {
+        deferTickQueue.add(() -> this.handlePlayerChopping(client.getLocalPlayer()));
+    }
+
+    @Subscribe
     public void onPlayerSpawned(PlayerSpawned event) {
         Player player = event.getPlayer();
         if (player.equals(client.getLocalPlayer())) {
@@ -188,7 +196,13 @@ public class TreeDespawnTimerPlugin extends Plugin {
         Player player = event.getPlayer();
         if (playerTreeChopping.containsKey(player)) {
             TreeState treeState = playerTreeChopping.get(player);
-            treeState.hasUnrenderedPlayersChopping = true;
+            if (treeState.treeName.equals(TreeConfig.REDWOOD.name())) {
+                computePlayerPlaneChange();
+            }
+
+            if (!treeState.treeName.equals(TreeConfig.REDWOOD.name()) || hasLocalPlayerRecentlyClimbedRedwood()) {
+                treeState.hasUnrenderedPlayersChopping = true;
+            }
             treeState.playersChopping.remove(player);
             playerTreeChopping.remove(player);
         }
@@ -227,7 +241,7 @@ public class TreeDespawnTimerPlugin extends Plugin {
             if (isNewPlayer && !interactingTree.hasUnrenderedPlayersChopping && interactingTree.playersChopping.isEmpty()) {
                 if (interactingTree.treeName.equals(TreeConfig.REDWOOD.name())) {
                     // Local player just climbed a redwood tree, so assume they've been chopping for a while
-                    if (playerRecentlyClimbedRedwood > 0) {
+                    if (hasLocalPlayerRecentlyClimbedRedwood()) {
                         interactingTree.hideTree = true;
                     }
                     // If the local player has already been at redwoods and a new player shows up,
@@ -245,6 +259,18 @@ public class TreeDespawnTimerPlugin extends Plugin {
         treeState.playersChopping.forEach(playerTreeChopping::remove);
         treeState.points.forEach(treeAtLocation::remove);
         uniqueTrees.remove(treeState);
+    }
+
+    void computePlayerPlaneChange() {
+        int newPlane = client.getLocalPlayer().getWorldLocation().getPlane();
+        if (newPlane != currentPlayerPlane) {
+            currentPlayerPlane = newPlane;
+            localPlayerRecentlyClimbedRedwood = playerSpawnedTicksMax;
+        }
+    }
+
+    boolean hasLocalPlayerRecentlyClimbedRedwood() {
+        return localPlayerRecentlyClimbedRedwood > 0;
     }
 
     @Nullable
@@ -271,8 +297,11 @@ public class TreeDespawnTimerPlugin extends Plugin {
     }
 
     // https://github.com/runelite/runelite/blob/master/runelite-client/src/main/java/net/runelite/client/plugins/woodcutting/WoodcuttingPlugin.java#L103
-    private boolean isWoodcutting(Actor actor) {
-        switch (actor.getAnimation()) {
+    private boolean isWoodcutting(Player player) {
+        if (playerRecentlySpeced.containsKey(player)) {
+            return true;
+        }
+        switch (player.getAnimation()) {
             // 1H Axes
             case AnimationID.WOODCUTTING_BRONZE:
             case AnimationID.WOODCUTTING_IRON:
@@ -299,8 +328,10 @@ public class TreeDespawnTimerPlugin extends Plugin {
             case AnimationID.WOODCUTTING_2H_DRAGON:
             case AnimationID.WOODCUTTING_2H_CRYSTAL:
             case AnimationID.WOODCUTTING_2H_3A:
-                // Special Attack
+                return true;
+            // Special Attack
             case 2876: // (Lumber Up) Special Attack
+                playerRecentlySpeced.put(player, playerSpecTicksMax);
                 return true;
             default:
                 return false;

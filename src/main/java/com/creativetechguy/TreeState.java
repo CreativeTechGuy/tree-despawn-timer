@@ -136,4 +136,13 @@ public class TreeState {
         Point point = pointFunction.apply(gameObject);
         return WorldPoint.fromScene(client, point.getX(), point.getY(), gameObject.getPlane());
     }
+
+    public boolean canShowPopularIndicator() {
+        int regionID = worldPoint.getRegionID();
+        // Woodcutting guild doesn't use Forestry's tree popularity system
+        if (regionID == 6198 || regionID == 6454) {
+            return false;
+        }
+        return true;
+    }
 }
