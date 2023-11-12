@@ -25,14 +25,15 @@ public class TreeState {
     private int ticksLeft;
     private final int maxTicks;
     private final Client client;
+    private final TreeDespawnTimerConfig config;
 
-
-    public TreeState(GameObject tree, Client client) {
+    public TreeState(GameObject tree, Client client, TreeDespawnTimerConfig config) {
         worldPoint = tree.getWorldLocation();
         this.client = client;
-        TreeConfig config = TreeConfig.getTreeById(tree.getId());
-        treeName = config.name();
-        maxTicks = config.getMaxTicks();
+        this.config = config;
+        TreeConfig treeConfig = TreeConfig.getTreeById(tree.getId());
+        treeName = treeConfig.name();
+        maxTicks = treeConfig.getMaxTicks();
         ticksLeft = maxTicks;
         centerOffset = getCenterOffset(tree);
         points = getPoints(tree);
@@ -66,20 +67,21 @@ public class TreeState {
     }
 
     Color getTimerColor() {
+        // This is used for debugging only
         if (hideTree) {
             return Color.GRAY;
         }
         double percent = getTimePercent() * 100;
         if (percent < 15) {
-            return new Color(220, 0, 0);
+            return config.timerColorLow();
         }
         if (percent < 40) {
-            return new Color(230, 160, 0);
+            return config.timerColorMedium();
         }
         if (percent < 80) {
-            return new Color(230, 230, 0);
+            return config.timerColorHigh();
         }
-        return new Color(0, 255, 0);
+        return config.timerColorFull();
     }
 
     Float getTimePercent() {
@@ -91,7 +93,8 @@ public class TreeState {
     }
 
     Integer getTimeSeconds(int subTickMs) {
-        return (int) Math.floor((ticksLeft * Constants.GAME_TICK_LENGTH + subTickMs * getTickDelta()) / 1000f);
+        return Math.max((int) Math.floor((ticksLeft * Constants.GAME_TICK_LENGTH + subTickMs * getTickDelta()) / 1000f),
+                0);
     }
 
     private List<WorldPoint> getPoints(GameObject gameObject) {

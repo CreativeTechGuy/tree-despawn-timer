@@ -51,10 +51,10 @@ public class TreeDespawnTimerOverlay extends Overlay {
                 ProgressPieComponent pie = new ProgressPieComponent();
                 pie.setPosition(point);
                 pie.setBorderColor(treeState.getTimerColor());
-                pie.setDiameter(16);
+                pie.setDiameter(config.uiSizeNormal());
                 if (isPopularTree) {
                     pie.setBorder(Color.BLACK, 2);
-                    pie.setDiameter(25);
+                    pie.setDiameter(config.uiSizePopular());
                 }
                 pie.setFill(treeState.getTimerColor());
                 pie.setProgress(treeState.getTimePercent());

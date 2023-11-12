@@ -10,6 +10,7 @@ import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.events.*;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
+import net.runelite.client.events.ConfigChanged;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.ui.overlay.OverlayManager;
@@ -69,6 +70,7 @@ public class TreeDespawnTimerPlugin extends Plugin {
 
     @Override
     protected void startUp() throws Exception {
+        CustomTextComponent.updateFontSizes(config.uiSizeNormal(), config.uiSizePopular());
         overlayManager.add(treeDespawnTimerOverlay);
         deferTickQueue.add(() -> {
             client.getPlayers().forEach(player -> {
@@ -95,6 +97,17 @@ public class TreeDespawnTimerPlugin extends Plugin {
         newlySpawnedPlayers.clear();
         deferTickQueue.clear();
         subTickFuture.cancel(false);
+    }
+
+    @Subscribe
+    public void onConfigChanged(ConfigChanged event) {
+        if (!event.getGroup().equals(TreeDespawnTimerConfig.GROUP_NAME)) {
+            return;
+        }
+        if (event.getKey().equals(TreeDespawnTimerConfig.UI_SIZE_NORMAL) || event.getKey()
+                .equals(TreeDespawnTimerConfig.UI_SIZE_POPULAR)) {
+            CustomTextComponent.updateFontSizes(config.uiSizeNormal(), config.uiSizePopular());
+        }
     }
 
     @Subscribe
@@ -147,7 +160,7 @@ public class TreeDespawnTimerPlugin extends Plugin {
     public void onGameObjectSpawned(GameObjectSpawned event) {
         GameObject gameObject = event.getGameObject();
         if (TreeConfig.isTree(gameObject)) {
-            TreeState treeState = new TreeState(gameObject, client);
+            TreeState treeState = new TreeState(gameObject, client, config);
             if (treeAtLocation.containsKey(gameObject.getWorldLocation())) {
                 return;
             }

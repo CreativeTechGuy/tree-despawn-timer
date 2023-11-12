@@ -16,8 +16,14 @@ public class CustomTextComponent implements RenderableEntity {
     @Setter
     private boolean centered = true;
 
-    static Font emphasizeFont = FontManager.getRunescapeBoldFont().deriveFont(16f);
-    static Font standardFont = FontManager.getRunescapeSmallFont().deriveFont(16f);
+    private static Font emphasizeFont = FontManager.getRunescapeBoldFont().deriveFont(16f);
+    private static Font standardFont = FontManager.getRunescapeSmallFont().deriveFont(16f);
+
+    static void updateFontSizes(int normal, int emphasized) {
+        standardFont = FontManager.getRunescapeSmallFont().deriveFont((float) normal);
+        // Bold font is naturally much larger than the small font, so scale down the size to keep them in-line
+        emphasizeFont = FontManager.getRunescapeBoldFont().deriveFont((float) Math.round(emphasized * 0.65f));
+    }
 
     public CustomTextComponent(String text, Point position) {
         this.text = text;
