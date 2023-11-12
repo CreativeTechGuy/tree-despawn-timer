@@ -11,6 +11,7 @@ import net.runelite.client.ui.overlay.components.ProgressPieComponent;
 
 import javax.inject.Inject;
 import java.awt.*;
+import java.time.Duration;
 
 public class TreeDespawnTimerOverlay extends Overlay {
 
@@ -60,6 +61,16 @@ public class TreeDespawnTimerOverlay extends Overlay {
                 pie.render(graphics);
             } else if (config.timerType() == TimerTypes.TICKS) {
                 String text = treeState.getTimeTicks().toString();
+                CustomTextComponent textComponent = new CustomTextComponent(text,
+                        new java.awt.Point(point.getX(), point.getY()));
+                if (isPopularTree) {
+                    textComponent.setEmphasize(true);
+                }
+                textComponent.setColor(treeState.getTimerColor());
+                textComponent.render(graphics);
+            } else if (config.timerType() == TimerTypes.SECONDS) {
+                Duration duration = Duration.ofSeconds(treeState.getTimeSeconds(plugin.getSubTick()));
+                String text = String.format("%d:%02d", duration.toMinutesPart(), duration.toSecondsPart());
                 CustomTextComponent textComponent = new CustomTextComponent(text,
                         new java.awt.Point(point.getX(), point.getY()));
                 if (isPopularTree) {

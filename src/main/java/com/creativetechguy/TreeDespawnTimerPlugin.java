@@ -1,6 +1,7 @@
 package com.creativetechguy;
 
 import com.google.inject.Provides;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.*;
 import net.runelite.api.coords.Angle;
@@ -18,6 +19,10 @@ import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
 @Slf4j
@@ -39,6 +44,11 @@ public class TreeDespawnTimerPlugin extends Plugin {
     @Inject
     private TreeDespawnTimerOverlay treeDespawnTimerOverlay;
 
+    @Getter
+    private int subTick = 0;
+
+    private final ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
+    private ScheduledFuture<?> subTickFuture;
     private final Pattern WOOD_CUT_PATTERN = Pattern.compile("You get (?:some|an)[\\w ]+(?:logs?|mushrooms)\\.");
     private final HashMap<WorldPoint, TreeState> treeAtLocation = new HashMap<>();
     protected HashSet<TreeState> uniqueTrees = new HashSet<>();
@@ -64,6 +74,14 @@ public class TreeDespawnTimerPlugin extends Plugin {
                 handlePlayerChopping(player);
             });
         });
+        subTickFuture = executor.scheduleAtFixedRate(
+                () -> {
+                    subTick += Constants.CLIENT_TICK_LENGTH;
+                },
+                0,
+                Constants.CLIENT_TICK_LENGTH,
+                TimeUnit.MILLISECONDS
+        );
     }
 
     @Override
@@ -74,6 +92,7 @@ public class TreeDespawnTimerPlugin extends Plugin {
         playerTreeChopping.clear();
         newlySpawnedPlayers.clear();
         deferTickQueue.clear();
+        subTickFuture.cancel(false);
     }
 
     @Subscribe
@@ -118,6 +137,7 @@ public class TreeDespawnTimerPlugin extends Plugin {
             p.setValue(p.getValue() - 1);
             return p.getValue() <= 0;
         });
+        subTick = 0;
     }
 
     @Subscribe

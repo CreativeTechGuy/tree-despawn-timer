@@ -38,16 +38,21 @@ public class TreeState {
         points = getPoints(tree);
     }
 
-    void tick() {
+    int getTickDelta() {
         if (!playersChopping.isEmpty() || hasUnrenderedPlayersChopping) {
             if (playersChopping.size() >= 2 || !playersChopping.contains(client.getLocalPlayer()) || haveYouChoppedLog || hasUnrenderedPlayersChopping) {
                 if (ticksLeft > 0) {
-                    ticksLeft--;
+                    return -1;
                 }
             }
         } else if (ticksLeft < maxTicks) {
-            ticksLeft++;
+            return 1;
         }
+        return 0;
+    }
+
+    void tick() {
+        ticksLeft += getTickDelta();
     }
 
     boolean shouldShowTimer() {
@@ -83,6 +88,10 @@ public class TreeState {
 
     Integer getTimeTicks() {
         return Math.max(ticksLeft, 0);
+    }
+
+    Integer getTimeSeconds(int subTickMs) {
+        return (int) Math.floor((ticksLeft * Constants.GAME_TICK_LENGTH + subTickMs * getTickDelta()) / 1000f);
     }
 
     private List<WorldPoint> getPoints(GameObject gameObject) {
