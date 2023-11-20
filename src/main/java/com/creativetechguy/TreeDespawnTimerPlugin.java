@@ -55,6 +55,7 @@ public class TreeDespawnTimerPlugin extends Plugin {
     protected HashSet<TreeState> uniqueTrees = new HashSet<>();
     private final HashMap<Player, TreeState> playerTreeChopping = new HashMap<>();
     private final HashMap<Player, Integer> newlySpawnedPlayers = new HashMap<>();
+    private final HashMap<Player, WorldPoint> playerSpawnLocation = new HashMap<>();
     private final ArrayList<Runnable> deferTickQueue = new ArrayList<>();
     private final HashMap<Player, Integer> playerRecentlySpeced = new HashMap<>();
     private int nextGarbageCollect = 100;
@@ -95,6 +96,7 @@ public class TreeDespawnTimerPlugin extends Plugin {
         uniqueTrees.clear();
         playerTreeChopping.clear();
         newlySpawnedPlayers.clear();
+        playerSpawnLocation.clear();
         deferTickQueue.clear();
         subTickFuture.cancel(false);
     }
@@ -147,6 +149,9 @@ public class TreeDespawnTimerPlugin extends Plugin {
         }
         newlySpawnedPlayers.entrySet().removeIf(p -> {
             p.setValue(p.getValue() - 1);
+            if (p.getValue() <= 0) {
+                playerSpawnLocation.remove(p.getKey());
+            }
             return p.getValue() <= 0;
         });
         playerRecentlySpeced.entrySet().removeIf(p -> {
@@ -202,6 +207,7 @@ public class TreeDespawnTimerPlugin extends Plugin {
             return;
         }
         newlySpawnedPlayers.put(player, playerSpawnedTicksMax);
+        playerSpawnLocation.put(player, player.getWorldLocation());
     }
 
     @Subscribe
@@ -236,6 +242,11 @@ public class TreeDespawnTimerPlugin extends Plugin {
     }
 
     void handlePlayerChopping(Player player) {
+        // If the player has moved since they spawned, they weren't already chopping
+        if (hasMoved(player)) {
+            newlySpawnedPlayers.remove(player);
+            playerSpawnLocation.remove(player);
+        }
         boolean isNewPlayer = newlySpawnedPlayers.containsKey(player);
         if (playerTreeChopping.containsKey(player)) {
             TreeState treeState = playerTreeChopping.get(player);
@@ -349,5 +360,13 @@ public class TreeDespawnTimerPlugin extends Plugin {
             default:
                 return false;
         }
+    }
+
+    private boolean hasMoved(Player player) {
+        WorldPoint spawnLocation = playerSpawnLocation.get(player);
+        if (spawnLocation == null) {
+            return false;
+        }
+        return !player.getWorldLocation().equals(spawnLocation);
     }
 }
