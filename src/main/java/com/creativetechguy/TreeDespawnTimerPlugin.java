@@ -58,11 +58,13 @@ public class TreeDespawnTimerPlugin extends Plugin {
     private final HashMap<Player, WorldPoint> playerSpawnLocation = new HashMap<>();
     private final ArrayList<Runnable> deferTickQueue = new ArrayList<>();
     private final HashMap<Player, Integer> playerRecentlySpeced = new HashMap<>();
-    private int nextGarbageCollect = 100;
+    private final HashMap<Player, Integer> playerAnimationRecheck = new HashMap<>();
+    private int nextGarbageCollect = 25;
     private int localPlayerRecentlyClimbedRedwood = 0;
     private int currentPlayerPlane = 0;
     private final int playerSpawnedTicksMax = 8;
     private final int playerSpecTicksMax = 8;
+    private final int animationRecheckTicks = 4;
 
     @Provides
     TreeDespawnTimerConfig provideConfig(ConfigManager configManager) {
@@ -137,7 +139,7 @@ public class TreeDespawnTimerPlugin extends Plugin {
         nextGarbageCollect--;
         if (nextGarbageCollect <= 0) {
             ArrayList<TreeState> toDelete = new ArrayList<>();
-            nextGarbageCollect = 25;
+            nextGarbageCollect = 25; // 15 seconds
             uniqueTrees.forEach(entry -> {
                 // Cleanup untouched trees far away from the player
                 if ((entry.worldPoint.distanceTo(client.getLocalPlayer()
@@ -147,6 +149,14 @@ public class TreeDespawnTimerPlugin extends Plugin {
             });
             toDelete.forEach(this::deleteTree);
         }
+        // Chopping animations frequently face the wrong direction initially, this rechecks the animation state a few seconds after it changes
+        playerAnimationRecheck.entrySet().removeIf(p -> {
+            p.setValue(p.getValue() - 1);
+            if (p.getValue() <= 0) {
+                this.handlePlayerChopping(p.getKey());
+            }
+            return p.getValue() <= 0;
+        });
         newlySpawnedPlayers.entrySet().removeIf(p -> {
             p.setValue(p.getValue() - 1);
             if (p.getValue() <= 0) {
@@ -192,12 +202,8 @@ public class TreeDespawnTimerPlugin extends Plugin {
         if (event.getActor() instanceof Player) {
             Player player = (Player) event.getActor();
             deferTickQueue.add(() -> this.handlePlayerChopping(player));
+            playerAnimationRecheck.put(player, animationRecheckTicks);
         }
-    }
-
-    @Subscribe
-    public void onMenuOptionClicked(MenuOptionClicked event) {
-        deferTickQueue.add(() -> this.handlePlayerChopping(client.getLocalPlayer()));
     }
 
     @Subscribe
