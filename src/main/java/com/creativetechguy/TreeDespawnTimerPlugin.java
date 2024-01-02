@@ -100,6 +100,8 @@ public class TreeDespawnTimerPlugin extends Plugin {
         newlySpawnedPlayers.clear();
         playerSpawnLocation.clear();
         deferTickQueue.clear();
+        playerRecentlySpeced.clear();
+        playerAnimationRecheck.clear();
         subTickFuture.cancel(false);
     }
 
@@ -121,7 +123,10 @@ public class TreeDespawnTimerPlugin extends Plugin {
             uniqueTrees.clear();
             playerTreeChopping.clear();
             newlySpawnedPlayers.clear();
+            playerSpawnLocation.clear();
             deferTickQueue.clear();
+            playerRecentlySpeced.clear();
+            playerAnimationRecheck.clear();
             localPlayerRecentlyClimbedRedwood = playerSpawnedTicksMax;
         }
     }
@@ -150,10 +155,14 @@ public class TreeDespawnTimerPlugin extends Plugin {
             toDelete.forEach(this::deleteTree);
         }
         // Chopping animations frequently face the wrong direction initially, this rechecks the animation state a few seconds after it changes
+        // And rechecks continuously while chopping since the player may rotate without a new animation playing
         playerAnimationRecheck.entrySet().removeIf(p -> {
             p.setValue(p.getValue() - 1);
             if (p.getValue() <= 0) {
                 this.handlePlayerChopping(p.getKey());
+                if (isWoodcutting(p.getKey())) {
+                    p.setValue(animationRecheckTicks);
+                }
             }
             return p.getValue() <= 0;
         });
@@ -254,19 +263,14 @@ public class TreeDespawnTimerPlugin extends Plugin {
             playerSpawnLocation.remove(player);
         }
         boolean isNewPlayer = newlySpawnedPlayers.containsKey(player);
-        if (playerTreeChopping.containsKey(player)) {
-            TreeState treeState = playerTreeChopping.get(player);
-            treeState.playersChopping.remove(player);
-            if (player.equals(client.getLocalPlayer())) {
-                treeState.haveYouChoppedLog = false;
-            }
-            playerTreeChopping.remove(player);
-        }
+        TreeState previousTree = playerTreeChopping.get(player);
+        TreeState newTree = null;
         if (isWoodcutting(player)) {
             TreeState interactingTree = findClosetFacingTree(player);
             if (interactingTree == null) {
                 return;
             }
+            newTree = interactingTree;
             // A player spawned in and nearly immediately started chopping, assume they've been chopping for a while
             if (isNewPlayer && !interactingTree.hasUnrenderedPlayersChopping && interactingTree.playersChopping.isEmpty()) {
                 if (interactingTree.treeName.equals(TreeConfig.REDWOOD.name())) {
@@ -282,6 +286,15 @@ public class TreeDespawnTimerPlugin extends Plugin {
             }
             interactingTree.playersChopping.add(player);
             playerTreeChopping.put(player, interactingTree);
+        }
+        if (previousTree != newTree && previousTree != null) {
+            previousTree.playersChopping.remove(player);
+            if (player.equals(client.getLocalPlayer())) {
+                previousTree.haveYouChoppedLog = false;
+            }
+            if (newTree == null) {
+                playerTreeChopping.remove(player);
+            }
         }
     }
 
