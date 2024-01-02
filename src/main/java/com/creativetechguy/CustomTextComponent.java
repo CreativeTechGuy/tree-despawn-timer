@@ -43,14 +43,13 @@ public class CustomTextComponent implements RenderableEntity {
             position.setLocation(position.getX() - textWidth / 2d, position.getY() + textHeight / 2d);
         }
 
+        graphics.setColor(Color.BLACK);
         if (emphasize) {
-            graphics.setColor(Color.BLACK);
-
-            graphics.drawString(text, position.x, position.y + 1);
             graphics.drawString(text, position.x, position.y - 1);
-            graphics.drawString(text, position.x + 1, position.y);
             graphics.drawString(text, position.x - 1, position.y);
         }
+        graphics.drawString(text, position.x, position.y + 1);
+        graphics.drawString(text, position.x + 1, position.y);
 
         graphics.setColor(color);
         graphics.drawString(text, position.x, position.y);
