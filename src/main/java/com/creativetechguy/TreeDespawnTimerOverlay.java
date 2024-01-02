@@ -46,7 +46,9 @@ public class TreeDespawnTimerOverlay extends Overlay {
             if (point == null) {
                 continue;
             }
-            boolean isPopularTree = config.highlightPopularTrees() && treeState.playersChopping.size() >= 10 && treeState.canShowPopularIndicator();
+            // Mobile InfoBox reveals that the +10 bonus doesn't include yourself.
+            int minPlayersForPopular = treeState.playersChopping.contains(client.getLocalPlayer()) ? 11 : 10;
+            boolean isPopularTree = config.highlightPopularTrees() && treeState.playersChopping.size() >= minPlayersForPopular && treeState.canShowPopularIndicator();
             if (config.timerType() == TimerTypes.PIE) {
                 ProgressPieComponent pie = new ProgressPieComponent();
                 pie.setPosition(point);
