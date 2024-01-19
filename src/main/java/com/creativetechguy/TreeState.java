@@ -56,7 +56,13 @@ public class TreeState {
         ticksLeft += getTickDelta();
     }
 
-    boolean shouldShowTimer() {
+    boolean shouldShowTimer(DebugLevel debugLevel) {
+        if (DebugLevel.VERBOSE.shouldShow(debugLevel)) {
+            return true;
+        }
+        if (DebugLevel.BASIC.shouldShow(debugLevel) && ticksLeft < maxTicks) {
+            return true;
+        }
         if (hideTree) {
             return false;
         }
@@ -64,6 +70,10 @@ public class TreeState {
             return true;
         }
         return ticksLeft < maxTicks;
+    }
+
+    boolean shouldShowTimer() {
+        return shouldShowTimer(config.debugLevel());
     }
 
     Color getTimerColor() {
@@ -89,12 +99,18 @@ public class TreeState {
     }
 
     Integer getTimeTicks() {
+        if (DebugLevel.VERBOSE.shouldShow(config.debugLevel())) {
+            return ticksLeft;
+        }
         return Math.max(ticksLeft, 0);
     }
 
     Integer getTimeSeconds(int subTickMs) {
-        return Math.max((int) Math.floor((ticksLeft * Constants.GAME_TICK_LENGTH + subTickMs * getTickDelta()) / 1000f),
-                0);
+        int secondsLeft = (int) Math.floor((ticksLeft * Constants.GAME_TICK_LENGTH + subTickMs * getTickDelta()) / 1000f);
+        if (DebugLevel.VERBOSE.shouldShow(config.debugLevel())) {
+            return secondsLeft;
+        }
+        return Math.max(secondsLeft, 0);
     }
 
     private List<WorldPoint> getPoints(GameObject gameObject) {

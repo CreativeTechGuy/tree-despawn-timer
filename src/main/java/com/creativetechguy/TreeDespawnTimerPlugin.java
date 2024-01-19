@@ -203,7 +203,43 @@ public class TreeDespawnTimerPlugin extends Plugin {
         if (treeState == null) {
             return;
         }
+        if (DebugLevel.VERBOSE.shouldShow(config.debugLevel())) {
+            client.addChatMessage(ChatMessageType.GAMEMESSAGE,
+                    "TDT DEBUG",
+                    treeState.treeName.toLowerCase() + " despawned. P:" + treeState.playersChopping.size() + ", UPC:" + treeState.unrenderedPlayersChopping.size() + "," + (treeState.haveYouChoppedLog ? " HYCL " : " ") + treeState.getTimeSeconds(
+                            getSubTick()) + "s remaining" + (treeState.shouldShowTimer(DebugLevel.NONE) ? " (hidden)" : ""),
+                    "");
+        }
         deleteTree(treeState);
+    }
+
+    @Subscribe
+    public void onMenuOptionClicked(MenuOptionClicked event) {
+        if (!DebugLevel.SILLY.shouldShow(config.debugLevel())) {
+            return;
+        }
+        if (!event.getMenuOption().equals("Examine")) {
+            return;
+        }
+        Tile tile = client.getSelectedSceneTile();
+        assert tile != null;
+        GameObject[] gameObjects = Optional.ofNullable(tile.getGameObjects()).orElse(new GameObject[]{});
+        TreeState treeState = null;
+        for (GameObject gameObject : gameObjects) {
+            if (gameObject != null && treeAtLocation.containsKey(gameObject.getWorldLocation())) {
+                treeState = treeAtLocation.get(gameObject.getWorldLocation());
+            }
+        }
+        if (treeState != null && (treeState.playersChopping.size() > 0 || treeState.unrenderedPlayersChopping.size() > 0)) {
+            client.addChatMessage(ChatMessageType.GAMEMESSAGE,
+                    "TDT DEBUG",
+                    "P: " + treeState.playersChopping.stream()
+                            .map(Actor::getName)
+                            .collect(Collectors.joining(", ")) + " UPC: " + treeState.unrenderedPlayersChopping.stream()
+                            .map(Actor::getName)
+                            .collect(Collectors.joining(", ")),
+                    "");
+        }
     }
 
     @Subscribe

@@ -108,4 +108,23 @@ public interface TreeDespawnTimerConfig extends Config {
     default int uiSizePopular() {
         return 25;
     }
+
+    @ConfigSection(
+            name = "Debug",
+            description = "Advanced debugging features. You probably don't need this.",
+            position = 4,
+            closedByDefault = true
+    )
+    String debugSection = "debugSection";
+
+    @ConfigItem(
+            keyName = "debugLevel",
+            name = "Debug Level",
+            description = "Controls the amount of debug information displayed.",
+            section = debugSection
+    )
+    default DebugLevel debugLevel() {
+        return DebugLevel.NONE;
+    }
+
 }

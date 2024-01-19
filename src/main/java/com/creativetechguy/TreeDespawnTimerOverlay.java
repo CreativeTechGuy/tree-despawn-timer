@@ -72,13 +72,30 @@ public class TreeDespawnTimerOverlay extends Overlay {
                 textComponent.render(graphics);
             } else if (config.timerType() == TimerTypes.SECONDS) {
                 Duration duration = Duration.ofSeconds(treeState.getTimeSeconds(plugin.getSubTick()));
-                String text = String.format("%d:%02d", duration.toMinutesPart(), duration.toSecondsPart());
+                String text = String.format("%s%d:%02d",
+                        duration.toSeconds() < 0 ? "-" : "",
+                        Math.abs(duration.toMinutesPart()),
+                        Math.abs(duration.toSecondsPart()));
                 CustomTextComponent textComponent = new CustomTextComponent(text,
                         new java.awt.Point(point.getX(), point.getY()));
                 if (isPopularTree) {
                     textComponent.setEmphasize(true);
                 }
                 textComponent.setColor(treeState.getTimerColor());
+                textComponent.render(graphics);
+            }
+            if (DebugLevel.VERBOSE.shouldShow(config.debugLevel())) {
+                StringBuilder text = new StringBuilder();
+                text.append("P:").append(treeState.playersChopping.size());
+                if (treeState.hasUnrenderedPlayersChopping()) {
+                    text.append(" UPC:" + treeState.unrenderedPlayersChopping.size());
+                }
+                if (treeState.haveYouChoppedLog) {
+                    text.append(" HYCL");
+                }
+                CustomTextComponent textComponent = new CustomTextComponent(text.toString(),
+                        new java.awt.Point(point.getX(), point.getY() - 10));
+                textComponent.setColor(Color.CYAN);
                 textComponent.render(graphics);
             }
         }
