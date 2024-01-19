@@ -17,14 +17,13 @@ import net.runelite.client.ui.overlay.OverlayManager;
 
 import javax.annotation.Nullable;
 import javax.inject.Inject;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 @Slf4j
 @PluginDescriptor(
@@ -58,12 +57,12 @@ public class TreeDespawnTimerPlugin extends Plugin {
     private final HashMap<Player, WorldPoint> playerSpawnLocation = new HashMap<>();
     private final ArrayList<Runnable> deferTickQueue = new ArrayList<>();
     private final HashMap<Player, Integer> playerRecentlySpeced = new HashMap<>();
-    private final HashMap<Player, Integer> playerAnimationRecheck = new HashMap<>();
     private int nextGarbageCollect = 25;
     private int localPlayerRecentlyClimbedRedwood = 0;
     private int currentPlayerPlane = 0;
     private final int playerSpawnedTicksMax = 8;
     private final int playerSpecTicksMax = 8;
+    private int nextAnimationRecheck = 0;
     private final int animationRecheckTicks = 4;
 
     @Provides
@@ -101,7 +100,6 @@ public class TreeDespawnTimerPlugin extends Plugin {
         playerSpawnLocation.clear();
         deferTickQueue.clear();
         playerRecentlySpeced.clear();
-        playerAnimationRecheck.clear();
         subTickFuture.cancel(false);
     }
 
@@ -126,7 +124,6 @@ public class TreeDespawnTimerPlugin extends Plugin {
             playerSpawnLocation.clear();
             deferTickQueue.clear();
             playerRecentlySpeced.clear();
-            playerAnimationRecheck.clear();
             localPlayerRecentlyClimbedRedwood = playerSpawnedTicksMax;
         }
     }
@@ -145,27 +142,24 @@ public class TreeDespawnTimerPlugin extends Plugin {
         if (nextGarbageCollect <= 0) {
             ArrayList<TreeState> toDelete = new ArrayList<>();
             nextGarbageCollect = 25; // 15 seconds
-            uniqueTrees.forEach(entry -> {
+            uniqueTrees.forEach(tree -> {
                 // Cleanup untouched trees far away from the player
-                if ((entry.worldPoint.distanceTo(client.getLocalPlayer()
-                        .getWorldLocation()) > 150 && !entry.shouldShowTimer()) || (entry.getTimeTicks() == 0 && entry.playersChopping.size() == 0)) {
-                    toDelete.add(entry);
+                boolean isFarAway = tree.worldPoint.getPlane() == client.getLocalPlayer()
+                        .getWorldLocation()
+                        .getPlane() && tree.worldPoint.distanceTo(client.getLocalPlayer()
+                        .getWorldLocation()) > 150;
+                if ((isFarAway && !tree.shouldShowTimer(DebugLevel.NONE)) || (tree.getTimeTicks() <= 0 && tree.playersChopping.isEmpty())) {
+                    toDelete.add(tree);
                 }
             });
             toDelete.forEach(this::deleteTree);
         }
-        // Chopping animations frequently face the wrong direction initially, this rechecks the animation state a few seconds after it changes
-        // And rechecks continuously while chopping since the player may rotate without a new animation playing
-        playerAnimationRecheck.entrySet().removeIf(p -> {
-            p.setValue(p.getValue() - 1);
-            if (p.getValue() <= 0) {
-                this.handlePlayerChopping(p.getKey());
-                if (isWoodcutting(p.getKey())) {
-                    p.setValue(animationRecheckTicks);
-                }
-            }
-            return p.getValue() <= 0;
-        });
+        // Chopping animations frequently face the wrong direction initially, this rechecks the animation state every few seconds
+        nextAnimationRecheck--;
+        if (nextAnimationRecheck <= 0) {
+            nextAnimationRecheck = animationRecheckTicks;
+            client.getPlayers().forEach(this::handlePlayerChopping);
+        }
         newlySpawnedPlayers.entrySet().removeIf(p -> {
             p.setValue(p.getValue() - 1);
             if (p.getValue() <= 0) {
@@ -207,7 +201,7 @@ public class TreeDespawnTimerPlugin extends Plugin {
             client.addChatMessage(ChatMessageType.GAMEMESSAGE,
                     "TDT DEBUG",
                     treeState.treeName.toLowerCase() + " despawned. P:" + treeState.playersChopping.size() + ", UPC:" + treeState.unrenderedPlayersChopping.size() + "," + (treeState.haveYouChoppedLog ? " HYCL " : " ") + treeState.getTimeSeconds(
-                            getSubTick()) + "s remaining" + (treeState.shouldShowTimer(DebugLevel.NONE) ? " (hidden)" : ""),
+                            getSubTick()) + "s remaining" + (treeState.shouldShowTimer(DebugLevel.NONE) ? "" : " (hidden)"),
                     "");
         }
         deleteTree(treeState);
@@ -247,7 +241,6 @@ public class TreeDespawnTimerPlugin extends Plugin {
         if (event.getActor() instanceof Player) {
             Player player = (Player) event.getActor();
             deferTickQueue.add(() -> this.handlePlayerChopping(player));
-            playerAnimationRecheck.put(player, animationRecheckTicks);
         }
     }
 
@@ -271,7 +264,7 @@ public class TreeDespawnTimerPlugin extends Plugin {
             }
 
             if (!treeState.treeName.equals(TreeConfig.REDWOOD.name()) || hasLocalPlayerRecentlyClimbedRedwood()) {
-                treeState.hasUnrenderedPlayersChopping = true;
+                treeState.unrenderedPlayersChopping.add(player);
             }
             treeState.playersChopping.remove(player);
             playerTreeChopping.remove(player);
@@ -308,7 +301,7 @@ public class TreeDespawnTimerPlugin extends Plugin {
             }
             newTree = interactingTree;
             // A player spawned in and nearly immediately started chopping, assume they've been chopping for a while
-            if (isNewPlayer && !interactingTree.hasUnrenderedPlayersChopping && interactingTree.playersChopping.isEmpty()) {
+            if (isNewPlayer && !interactingTree.hasUnrenderedPlayersChopping() && interactingTree.playersChopping.isEmpty()) {
                 if (interactingTree.treeName.equals(TreeConfig.REDWOOD.name())) {
                     // Local player just climbed a redwood tree, so assume they've been chopping for a while
                     if (hasLocalPlayerRecentlyClimbedRedwood()) {
@@ -322,12 +315,10 @@ public class TreeDespawnTimerPlugin extends Plugin {
             }
             interactingTree.playersChopping.add(player);
             playerTreeChopping.put(player, interactingTree);
+            interactingTree.unrenderedPlayersChopping.removeIf((p) -> Objects.equals(p.getName(), player.getName()));
         }
         if (previousTree != newTree && previousTree != null) {
             previousTree.playersChopping.remove(player);
-            if (player.equals(client.getLocalPlayer())) {
-                previousTree.haveYouChoppedLog = false;
-            }
             if (newTree == null) {
                 playerTreeChopping.remove(player);
             }

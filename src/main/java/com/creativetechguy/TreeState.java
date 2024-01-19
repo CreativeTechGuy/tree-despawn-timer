@@ -16,9 +16,9 @@ public class TreeState {
     WorldPoint worldPoint;
     Point centerOffset;
     HashSet<Player> playersChopping = new HashSet<>();
+    HashSet<Player> unrenderedPlayersChopping = new HashSet<>();
     List<WorldPoint> points;
     String treeName;
-    boolean hasUnrenderedPlayersChopping = false;
     boolean haveYouChoppedLog = false;
     boolean hideTree = false;
 
@@ -39,15 +39,19 @@ public class TreeState {
         points = getPoints(tree);
     }
 
+    boolean hasUnrenderedPlayersChopping() {
+        return !unrenderedPlayersChopping.isEmpty();
+    }
+
     int getTickDelta() {
-        if (!playersChopping.isEmpty() || hasUnrenderedPlayersChopping) {
-            if (playersChopping.size() >= 2 || !playersChopping.contains(client.getLocalPlayer()) || haveYouChoppedLog || hasUnrenderedPlayersChopping) {
-                if (ticksLeft > 0) {
-                    return -1;
-                }
+        if (!playersChopping.isEmpty() || hasUnrenderedPlayersChopping()) {
+            if (playersChopping.size() >= 2 || !playersChopping.contains(client.getLocalPlayer()) || haveYouChoppedLog || hasUnrenderedPlayersChopping()) {
+                return -1;
             }
         } else if (ticksLeft < maxTicks) {
             return 1;
+        } else if (haveYouChoppedLog && ticksLeft == maxTicks) {
+            haveYouChoppedLog = false;
         }
         return 0;
     }
