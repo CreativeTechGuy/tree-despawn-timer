@@ -1,6 +1,6 @@
 # Tree Despawn Timer
 
-Demo of the plugin UI. You can also change the pie timer to show ticks as a number if you prefer.
+Demo of the plugin UI. You can also change the pie timer to show ticks or seconds if you prefer.
 ![Demo](./demo.png)
 
 This plugin will estimate the amount of time remaining to cut a tree before it'll be chopped down (despawn). This takes
@@ -14,7 +14,7 @@ tree was already being chopped when you arrived, no time is shown as we cannot b
 
 Config Options:
 
-* Timer Display Type - Choose between a pie timer and a tick counter
+* Timer Display Type - Choose between a pie timer, a tick counter, or time
 * Popular Tree Indicator - Increases the size of the timer when there are 10+ players chopping the tree. (Max players
   for the Forestry invisible woodcutting boost.)
 
