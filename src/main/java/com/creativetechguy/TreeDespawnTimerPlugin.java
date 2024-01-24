@@ -22,7 +22,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -49,7 +48,6 @@ public class TreeDespawnTimerPlugin extends Plugin {
 
     private final ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
     private ScheduledFuture<?> subTickFuture;
-    private final Pattern WOOD_CUT_PATTERN = Pattern.compile("You get (?:some|an)[\\w ]+(?:logs?|mushrooms)\\.");
     private final HashMap<WorldPoint, TreeState> treeAtLocation = new HashMap<>();
     protected HashSet<TreeState> uniqueTrees = new HashSet<>();
     private final HashMap<Player, TreeState> playerTreeChopping = new HashMap<>();
@@ -272,12 +270,8 @@ public class TreeDespawnTimerPlugin extends Plugin {
     }
 
     @Subscribe
-    public void onChatMessage(ChatMessage event) {
-        if (event.getType() != ChatMessageType.SPAM
-                && event.getType() != ChatMessageType.GAMEMESSAGE) {
-            return;
-        }
-        if (WOOD_CUT_PATTERN.matcher(event.getMessage()).matches()) {
+    public void onStatChanged(StatChanged event) {
+        if (event.getSkill() == Skill.WOODCUTTING) {
             TreeState interactingTree = playerTreeChopping.get(client.getLocalPlayer());
             if (interactingTree != null) {
                 interactingTree.haveYouChoppedLog = true;
