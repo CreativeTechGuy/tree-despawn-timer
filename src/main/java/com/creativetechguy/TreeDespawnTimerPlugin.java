@@ -391,6 +391,7 @@ public class TreeDespawnTimerPlugin extends Plugin {
             case AnimationID.WOODCUTTING_2H_RUNE:
             case AnimationID.WOODCUTTING_2H_DRAGON:
             case AnimationID.WOODCUTTING_2H_CRYSTAL:
+            case AnimationID.WOODCUTTING_2H_CRYSTAL_INACTIVE:
             case AnimationID.WOODCUTTING_2H_3A:
                 return true;
             // Special Attack
