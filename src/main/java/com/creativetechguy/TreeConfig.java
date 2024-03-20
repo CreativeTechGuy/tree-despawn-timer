@@ -19,7 +19,7 @@ public enum TreeConfig {
     MAPLE(60, new int[]{ObjectID.MAPLE_TREE_10832, ObjectID.MAPLE_TREE_36681, ObjectID.MAPLE_TREE_40754}),
     HOLLOW(36, new int[]{ObjectID.HOLLOW_TREE_10821, ObjectID.HOLLOW_TREE_10830}),
     MAHOGANY(60,
-            new int[]{ObjectID.MAHOGANY_TREE, ObjectID.MAHOGANY, ObjectID.MAHOGANY_TREE_40760}),
+            new int[]{ObjectID.MAHOGANY_TREE, ObjectID.MAHOGANY_TREE_36688, ObjectID.MAHOGANY_TREE_40760}),
     ARCTIC_PINE(60 + 24, new int[]{ObjectID.ARCTIC_PINE_TREE}),
     YEW(60 + 54,
             new int[]{ObjectID.YEW_TREE_10822, NullObjectID.NULL_10823, ObjectID.YEW_TREE_36683, ObjectID.YEW_TREE_40756}),
