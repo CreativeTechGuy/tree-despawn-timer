@@ -22,7 +22,7 @@ public enum TreeConfig {
             new int[]{ObjectID.MAHOGANY_TREE, ObjectID.MAHOGANY_TREE_36688, ObjectID.MAHOGANY_TREE_40760}),
     ARCTIC_PINE(60 + 24, new int[]{ObjectID.ARCTIC_PINE_TREE}),
     YEW(60 + 54,
-            new int[]{ObjectID.YEW_TREE_10822, NullObjectID.NULL_10823, ObjectID.YEW_TREE_36683, ObjectID.YEW_TREE_40756}),
+            new int[]{ObjectID.YEW_TREE_10822, ObjectID.YEW_TREE_36683, ObjectID.YEW_TREE_40756, ObjectID.YEW_TREE_42391}),
     MAGIC(60 * 3 + 54, new int[]{ObjectID.MAGIC_TREE_10834, NullObjectID.NULL_10835}),
     REDWOOD(60 * 4 + 24,
             // Farming Guild Redwoods are omitted: 34288, 34284, 34286, 34290
