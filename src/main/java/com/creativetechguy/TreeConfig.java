@@ -25,8 +25,7 @@ public enum TreeConfig {
             new int[]{ObjectID.YEW_TREE_10822, ObjectID.YEW_TREE_36683, ObjectID.YEW_TREE_40756, ObjectID.YEW_TREE_42391}),
     MAGIC(60 * 3 + 54, new int[]{ObjectID.MAGIC_TREE_10834, NullObjectID.NULL_10835}),
     REDWOOD(60 * 4 + 24,
-            // Farming Guild Redwoods are omitted: 34288, 34284, 34286, 34290
-            new int[]{ObjectID.REDWOOD_TREE, ObjectID.REDWOOD_TREE_29670, NullObjectID.NULL_34633, NullObjectID.NULL_34635, NullObjectID.NULL_34637, NullObjectID.NULL_34639});
+            new int[]{ObjectID.REDWOOD_TREE, ObjectID.REDWOOD_TREE_29670});
 
     private static final ArrayList<Integer> blockedRegions = new ArrayList<>(List.of(
             // Miscellania
