@@ -11,7 +11,6 @@ import java.util.List;
 
 public enum TreeConfig {
     // Seconds from: https://oldschool.runescape.wiki/w/Woodcutting#Mechanics
-    // Tree Ids (simplified) from: https://github.com/runelite/runelite/blob/master/runelite-client/src/main/java/net/runelite/client/plugins/woodcutting/Tree.java
     OAK(27, new int[]{ObjectID.OAK_TREE_4540, ObjectID.OAK_TREE_10820}),
     WILLOW(30,
             new int[]{ObjectID.WILLOW_TREE_10819, ObjectID.WILLOW_TREE_10829, ObjectID.WILLOW_TREE_10831, ObjectID.WILLOW_TREE_10833}),
@@ -22,7 +21,9 @@ public enum TreeConfig {
             new int[]{ObjectID.MAHOGANY_TREE, ObjectID.MAHOGANY_TREE_36688, ObjectID.MAHOGANY_TREE_40760}),
     ARCTIC_PINE(60 + 24, new int[]{ObjectID.ARCTIC_PINE_TREE}),
     YEW(60 + 54,
-            new int[]{ObjectID.YEW_TREE_10822, NullObjectID.NULL_10823, ObjectID.YEW_TREE_36683, ObjectID.YEW_TREE_40756, ObjectID.YEW_TREE_42391}),
+            new int[]{ObjectID.YEW_TREE_10822, NullObjectID.NULL_10823,
+                    // 10828 = Lumbridge Graveyard tree
+                    NullObjectID.NULL_10828, ObjectID.YEW_TREE_36683, ObjectID.YEW_TREE_40756, ObjectID.YEW_TREE_42391}),
     MAGIC(60 * 3 + 54, new int[]{ObjectID.MAGIC_TREE_10834, NullObjectID.NULL_10835}),
     REDWOOD(60 * 4 + 24,
             new int[]{ObjectID.REDWOOD_TREE, ObjectID.REDWOOD_TREE_29670});

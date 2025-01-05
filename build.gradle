@@ -24,7 +24,7 @@ dependencies {
 }
 
 group = 'com.creativetechguy'
-version = '1.4.5'
+version = '1.4.6'
 
 tasks.withType(JavaCompile) {
     options.encoding = 'UTF-8'
