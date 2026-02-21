@@ -2,34 +2,34 @@ package com.creativetechguy;
 
 import lombok.Getter;
 import net.runelite.api.GameObject;
-import net.runelite.api.NullObjectID;
-import net.runelite.api.ObjectID;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import net.runelite.api.gameval.ObjectID;
 
 public enum TreeConfig {
     // Seconds from: https://oldschool.runescape.wiki/w/Woodcutting#Mechanics
-    OAK(27, new int[]{ObjectID.OAK_TREE_4540, ObjectID.OAK_TREE_10820}),
-    WILLOW(30,
-            new int[]{ObjectID.WILLOW_TREE_10819, ObjectID.WILLOW_TREE_10829, ObjectID.WILLOW_TREE_10831, ObjectID.WILLOW_TREE_10833}),
-    TEAK(30, new int[]{ObjectID.TEAK_TREE, ObjectID.TEAK_TREE_36686, ObjectID.TEAK_TREE_40758}),
-    MAPLE(60, new int[]{ObjectID.MAPLE_TREE_10832, ObjectID.MAPLE_TREE_36681, ObjectID.MAPLE_TREE_40754}),
-    HOLLOW(36, new int[]{ObjectID.HOLLOW_TREE_10821, ObjectID.HOLLOW_TREE_10830}),
-    MAHOGANY(60,
-            new int[]{ObjectID.MAHOGANY_TREE, ObjectID.MAHOGANY_TREE_36688, ObjectID.MAHOGANY_TREE_40760}),
-    ARCTIC_PINE(60 + 24, new int[]{ObjectID.ARCTIC_PINE_TREE}),
-    YEW(60 + 54,
-            new int[]{ObjectID.YEW_TREE_10822, NullObjectID.NULL_10823,
-                    // 10828 = Lumbridge Graveyard tree
-                    NullObjectID.NULL_10828, ObjectID.YEW_TREE_36683, ObjectID.YEW_TREE_40756, ObjectID.YEW_TREE_42391}),
-    CAMPHOR(60 + 54, new int[]{ObjectID.CAMPHOR_TREE}),
-    MAGIC(60 * 3 + 54, new int[]{ObjectID.MAGIC_TREE_10834, NullObjectID.NULL_10835}),
-    IRONWOOD(60 * 3 + 54, new int[]{ObjectID.IRONWOOD_TREE}),
-    REDWOOD(60 * 4 + 24,
-            new int[]{ObjectID.REDWOOD_TREE, ObjectID.REDWOOD_TREE_29670}),
-    ROSEWOOD(60 * 4 + 24, new int[]{ObjectID.ROSEWOOD_TREE});
+	OAK(27, new int[]{ObjectID.POH_SMALL_TREE3_5, ObjectID.OAKTREE, ObjectID.AVIUM_OAK_1}),
+	WILLOW(30,
+		new int[]{ObjectID.WILLOWTREE, ObjectID.WILLOW_TREE2, ObjectID.WILLOW_TREE3, ObjectID.WILLOW_TREE4}),
+	TEAK(30, new int[]{ObjectID.TEAKTREE, ObjectID.PRIF_TEAKTREE, ObjectID.TEAKTREE_UPDATE}),
+	MAPLE(60, new int[]{ObjectID.MAPLETREE, ObjectID.PRIF_MAPLETREE, ObjectID.MAPLETREE_UPDATE}),
+	HOLLOW(36, new int[]{ObjectID.HOLLOW_TREE, ObjectID.HOLLOW_TREE_BIG}),
+	MAHOGANY(60,
+		new int[]{ObjectID.MAHOGANYTREE, ObjectID.PRIF_MAHOGANYTREE, ObjectID.MAHOGANYTREE_UPDATE}),
+	ARCTIC_PINE(60 + 24, new int[]{ObjectID.ARCTIC_PINE}),
+	YEW(60 + 54,
+		new int[]{ObjectID.YEWTREE, ObjectID.DEADMAN_YEWTREE,
+			// 10828 = Lumbridge Graveyard tree
+			ObjectID.DEADMAN_YEWTREE_INSURANCESTALL, ObjectID.PRIF_YEWTREE, ObjectID.YEWTREE_UPDATE, ObjectID.TREE_YEW_DEFAULT01}),
+	CAMPHOR(60 + 54, new int[]{ObjectID.CAMPHOR_TREE}),
+	MAGIC(60 * 3 + 54, new int[]{ObjectID.MAGICTREE, ObjectID.DEADMAN_MAGICTREE}),
+	IRONWOOD(60 * 3 + 54, new int[]{ObjectID.IRONWOOD_TREE}),
+	REDWOOD(60 * 4 + 24,
+		new int[]{ObjectID.REDWOODTREE_L, ObjectID.REDWOODTREE_R}),
+	ROSEWOOD(60 * 4 + 24, new int[]{ObjectID.ROSEWOOD_TREE});
+
 
     private static final ArrayList<Integer> blockedRegions = new ArrayList<>(List.of(
             // Miscellania
