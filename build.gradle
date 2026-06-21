@@ -6,6 +6,9 @@ repositories {
     mavenLocal()
     maven {
         url = 'https://repo.runelite.net'
+        content {
+            includeGroupByRegex("net\\.runelite.*")
+        }
     }
     mavenCentral()
 }
@@ -24,7 +27,7 @@ dependencies {
 }
 
 group = 'com.creativetechguy'
-version = '1.5.1'
+version = '1.5.2'
 
 tasks.withType(JavaCompile) {
     options.encoding = 'UTF-8'

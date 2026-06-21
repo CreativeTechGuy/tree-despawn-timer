@@ -341,9 +341,41 @@ public class TreeDespawnTimerPlugin extends Plugin {
     @Nullable
     TreeState findClosetFacingTree(Player player) {
         WorldPoint actorLocation = player.getWorldLocation();
+        Direction[] directions = {Direction.NORTH, Direction.SOUTH, Direction.EAST, Direction.WEST};
+        Boolean[] hasNeighbor = {
+                treeAtLocation.containsKey(neighborPoint(actorLocation, directions[0])),
+                treeAtLocation.containsKey(neighborPoint(actorLocation, directions[1])),
+                treeAtLocation.containsKey(neighborPoint(actorLocation, directions[2])),
+                treeAtLocation.containsKey(neighborPoint(actorLocation, directions[3]))
+        };
+        // If there's only one tree adjacent to the player, assume it's that one. Sometimes when the player starts chopping after moving they are facing the wrong direction.
+        long neighborTrees = Arrays.stream(hasNeighbor).filter((item) -> item).count();
+        if (neighborTrees == 1) {
+            for (int i = 0; i < directions.length; i++) {
+                if (hasNeighbor[i]) {
+                    return treeAtLocation.get(neighborPoint(actorLocation, directions[i]));
+                }
+            }
+        }
+
         Direction direction = new Angle(player.getOrientation()).getNearestDirection();
         WorldPoint facingPoint = neighborPoint(actorLocation, direction);
-        return treeAtLocation.get(facingPoint);
+        if (treeAtLocation.containsKey(facingPoint)) {
+            return treeAtLocation.get(facingPoint);
+        }
+
+        // As of 6/21/26, the player faces the SW corner of the tree. So account for that and check an additional tile.
+        if (direction == Direction.SOUTH) {
+            if (hasNeighbor[Direction.EAST.ordinal()]) {
+                return treeAtLocation.get(neighborPoint(actorLocation, Direction.EAST));
+            }
+        }
+        if (direction == Direction.WEST) {
+            if (hasNeighbor[Direction.NORTH.ordinal()]) {
+                return treeAtLocation.get(neighborPoint(actorLocation, Direction.NORTH));
+            }
+        }
+        return null;
     }
 
     private WorldPoint neighborPoint(WorldPoint point, Direction direction) {
