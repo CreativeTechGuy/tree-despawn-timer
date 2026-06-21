@@ -377,8 +377,10 @@ public class TreeDespawnTimerPlugin extends Plugin {
             case AnimationID.HUMAN_WOODCUTTING_RUNE_AXE:
             case AnimationID.HUMAN_WOODCUTTING_GILDED_AXE:
             case AnimationID.HUMAN_WOODCUTTING_DRAGON_AXE:
-            case AnimationID.HUMAN_WOODCUTTING_TRAILBLAZER_AXE_NO_INFERNAL:
             case AnimationID.HUMAN_WOODCUTTING_INFERNAL_AXE:
+            case AnimationID.HUMAN_WOODCUTTING_TRAILBLAZER_AXE_NO_INFERNAL:
+            case AnimationID.HUMAN_WOODCUTTING_TRAILBLAZER_RELOADED_AXE_NO_INFERNAL:
+            case AnimationID.HUMAN_WOODCUTTING_TRAILBLAZER_RELOADED_AXE:
             case AnimationID.HUMAN_WOODCUTTING_TRAILBLAZER_AXE:
             case AnimationID.HUMAN_WOODCUTTING_3A_AXE:
             case AnimationID.HUMAN_WOODCUTTING_CRYSTAL_AXE:
